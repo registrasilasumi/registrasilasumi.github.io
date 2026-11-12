@@ -1360,9 +1360,15 @@ function bukaLepas(e) {
     return root;
   }
 
-  /* ---------- Agenda registrasi (untuk P2U dan petugas) ---------- */
+  /* ---------- Agenda registrasi (untuk P2U dan petugas): satu hari per tampilan ---------- */
+  function geserHari(iso, n) {
+    var d = new Date(iso + 'T12:00:00'); d.setDate(d.getDate() + n);
+    return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+  }
   function vAgenda() {
-    var T = today(), all = [], root = h('div');
+    var T = today(), root = h('div');
+    if (!ui.agTgl || !/^\d{4}-\d{2}-\d{2}$/.test(ui.agTgl)) ui.agTgl = T;
+    var D = ui.agTgl, all = [];
     S.events.forEach(function (e) {
       if (e.tipe !== 'sidang' && e.tipe !== 'periksa') return;
       all.push({ k: e.tipe, tgl: e.tgl || '', jam: e.jam || '', nama: nm(who(e).nama), ket: e.instansi || '', mode: e.mode, done: !!e.done, ref: 'events/' + e.id });
@@ -1370,32 +1376,34 @@ function bukaLepas(e) {
     S.mutasi.forEach(function (e) {
       all.push({ k: 'mutasi', arah: e.arah, tgl: e.tgl || '', jam: '', nama: nm(e.nama), ket: (e.asal && e.tujuan) ? e.asal + ' → ' + e.tujuan : (e.tujuan || e.asal || ''), done: !!e.done, ref: 'mutasi/' + e.id });
     });
+    var hari = all.filter(function (a) { return a.tgl === D; });
     var f = ui.agj || '';
+    function ke(t) { ui.agTgl = t; render(); }
+    var tg = h('input', { type: 'date', value: D, 'aria-label': 'Pilih tanggal agenda', onchange: function () { if (tg.value) ke(tg.value); } });
+    add(root, h('div', { class: 'card' },
+      h('div', { class: 'bar2' },
+        h('button', { class: 'btn', type: 'button', text: '‹ Sebelumnya', onclick: function () { ke(geserHari(D, -1)); } }),
+        tg,
+        h('button', { class: 'btn', type: 'button', text: 'Berikutnya ›', onclick: function () { ke(geserHari(D, 1)); } }),
+        D !== T ? h('button', { class: 'btn pri', type: 'button', text: 'Hari ini', onclick: function () { ke(T); } }) : null),
+      h('h2', { text: P.tglID(D, true) + ' · ' + when(D), style: 'margin:12px 0 8px' })));
     function pill(t, k) { return h('button', { class: 'pill', 'aria-pressed': f === k ? 'true' : 'false', onclick: function () { ui.agj = k; render(); } }, t); }
-    var tampil = all.filter(function (a) { return (!f || a.k === f) && (a.tgl ? (a.tgl >= T || !a.done) : !a.done); });
-    var cnt = function (k) { return all.filter(function (a) { return (!k || a.k === k) && (a.tgl ? (a.tgl >= T || !a.done) : !a.done); }).length; };
+    var cnt = function (k) { return hari.filter(function (a) { return !k || a.k === k; }).length; };
+    var tampil = hari.filter(function (a) { return !f || a.k === f; }).sort(function (a, b) { return (a.jam || '99').localeCompare(b.jam || '99'); });
     add(root, h('div', { class: 'card' }, h('div', { class: 'bar2' }, pill('Semua ' + cnt(''), ''), pill('Sidang ' + cnt('sidang'), 'sidang'), pill('Pemeriksaan ' + cnt('periksa'), 'periksa'), pill('Mutasi ' + cnt('mutasi'), 'mutasi'))));
-    if (!tampil.length) { add(root, h('div', { class: 'card' }, empty('Tidak ada agenda', 'Agenda sidang, pemeriksaan, dan mutasi yang akan datang tampil di sini.'))); return root; }
-    var groups = {}, order = [];
-    tampil.forEach(function (a) { var g = a.tgl ? (a.tgl < T ? 'lewat' : a.tgl) : 'tanpa'; if (!groups[g]) { groups[g] = []; order.push(g); } groups[g].push(a); });
-    order.sort(function (a, b) { var r = function (x) { return x === 'lewat' ? '0' : x === 'tanpa' ? '9' : '1' + x; }; return r(a).localeCompare(r(b)); });
-    order.forEach(function (g) {
-      var items = groups[g].sort(function (a, b) { return (a.tgl + a.jam).localeCompare(b.tgl + b.jam); });
-      var title = g === 'lewat' ? 'Terlewat, belum dicentang' : g === 'tanpa' ? 'Tanggal belum ditentukan' : P.tglID(g) + ' · ' + when(g);
-      var cols = [
-        { h: 'Jam', c: 'mono', f: function (a) { return a.jam ? a.jam.replace(':', '.') : (a.tgl && g === 'lewat' ? P.tglID(a.tgl) : ''); } },
-        { h: 'Jenis', f: function (a) { return a.k === 'mutasi' ? badge(a.arah === 'masuk' ? 'Mutasi masuk' : 'Mutasi keluar', a.arah === 'masuk' ? 'blue' : 'gold') : badge(a.k === 'sidang' ? 'Sidang' : 'Pemeriksaan', a.k === 'sidang' ? 'violet' : 'blue'); } },
-        { h: 'Nama', f: function (a) { return a.nama; } },
-        { h: 'Tujuan / instansi', f: function (a) { return a.ket + (a.mode === 'online' ? ' (online)' : ''); } },
-        { h: 'Selesai', f: function (a) {
-          var ck = h('input', { type: 'checkbox', checked: a.done, disabled: !canDone(), 'aria-label': 'Selesai: ' + a.nama, onchange: function () {
-            S.db.doc(a.ref).update({ done: ck.checked, done_at: ck.checked ? new Date().toISOString() : '' }).catch(function (er) { ck.checked = !ck.checked; banner('Gagal menyimpan: ' + errText(er), 'bad'); });
-          } });
-          return ck;
-        } }
-      ];
-      add(root, h('div', { class: 'card' }, h('h2', { text: title }), table(cols, items, function (a) { return a.done ? 'done' : ''; })));
-    });
+    var cols = [
+      { h: 'Jam', c: 'mono', f: function (a) { return a.jam ? a.jam.replace(':', '.') : ''; } },
+      { h: 'Jenis', f: function (a) { return a.k === 'mutasi' ? badge(a.arah === 'masuk' ? 'Mutasi masuk' : 'Mutasi keluar', a.arah === 'masuk' ? 'blue' : 'gold') : badge(a.k === 'sidang' ? 'Sidang' : 'Pemeriksaan', a.k === 'sidang' ? 'violet' : 'blue'); } },
+      { h: 'Nama', f: function (a) { return a.nama; } },
+      { h: 'Tujuan / instansi', f: function (a) { return a.ket + (a.mode === 'online' ? ' (online)' : ''); } },
+      { h: 'Selesai', f: function (a) {
+        var ck = h('input', { type: 'checkbox', checked: a.done, disabled: !canDone(), 'aria-label': 'Selesai: ' + a.nama, onchange: function () {
+          S.db.doc(a.ref).update({ done: ck.checked, done_at: ck.checked ? new Date().toISOString() : '' }).catch(function (er) { ck.checked = !ck.checked; banner('Gagal menyimpan: ' + errText(er), 'bad'); });
+        } });
+        return ck;
+      } }
+    ];
+    add(root, h('div', { class: 'card' }, tampil.length ? table(cols, tampil, function (a) { return a.done ? 'done' : ''; }) : empty('Tidak ada agenda pada hari ini', 'Pakai tombol Sebelumnya atau Berikutnya untuk pindah hari.')));
     return root;
   }
 
