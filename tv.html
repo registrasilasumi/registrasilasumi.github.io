@@ -370,6 +370,33 @@ body.paused .paused-badge{display:inline-block}
 .rm .rm-g2 .rm-tl b{display:inline;white-space:nowrap}
 .rm .rm-g2{grid-template-rows:1.1fr 1fr}
 .rm .rm-g2 .rm-tl div{padding:calc(3*var(--u)) calc(7*var(--u))}
+/* Notifikasi tamu sudah masuk (dari centang selesai P2U) */
+#masuk{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;background:#0009;backdrop-filter:blur(3px)}
+#masuk.on{display:flex;animation:mkIn .35s ease-out}
+@keyframes mkIn{from{opacity:0}to{opacity:1}}
+.mk-card{position:relative;width:min(78vw,1100px);background:var(--panel);border-radius:1.6rem;padding:2.6rem 3rem clamp(9rem,15vw,14rem);box-shadow:0 30px 80px #0007;overflow:hidden;text-align:center;border-top:.9rem solid #2E6B3B;animation:mkPop .5s cubic-bezier(.2,1.4,.4,1)}
+@keyframes mkPop{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
+.mk-badge{display:inline-flex;align-items:center;gap:.7rem;background:#2E6B3B;color:#fff;font-weight:700;letter-spacing:.12em;text-transform:uppercase;font-size:clamp(1rem,1.8vw,1.6rem);padding:.5rem 1.4rem;border-radius:99px;animation:mkBeat 1.2s ease-in-out infinite}
+@keyframes mkBeat{50%{transform:scale(1.06)}}
+.mk-nama{font-size:clamp(2.4rem,6vw,5.6rem);font-weight:800;line-height:1.1;margin:1.4rem 0 .6rem;color:var(--ink)}
+.mk-ket{font-size:clamp(1.1rem,2.2vw,2rem);color:var(--ink2)}
+.mk-sudah{font-size:clamp(1.8rem,4vw,3.6rem);font-weight:800;color:#2E6B3B;margin-top:1.2rem;letter-spacing:.04em}
+.mk-jalan{position:absolute;left:0;right:0;bottom:0;height:clamp(7rem,12vw,12rem);overflow:hidden}
+.mk-jalan::after{content:"";position:absolute;left:0;right:0;bottom:1.1rem;height:.35rem;background:repeating-linear-gradient(90deg,var(--line) 0 2rem,transparent 2rem 3.4rem);opacity:.9}
+.mk-org{position:absolute;bottom:1.3rem;left:-10rem;width:clamp(5.5rem,9vw,9rem);height:clamp(5.5rem,9vw,9rem);animation:mkWalk 6.5s linear infinite}
+@keyframes mkWalk{from{left:-10rem}to{left:100%}}
+.mk-org svg{width:100%;height:100%;overflow:visible}
+.mk-org .bd{animation:mkBob .5s ease-in-out infinite;transform-origin:50% 60%}
+@keyframes mkBob{50%{transform:translateY(-3px)}}
+.mk-org .l1,.mk-org .a2{transform-box:fill-box;transform-origin:50% 5%;animation:mkSw .5s ease-in-out infinite alternate}
+.mk-org .l2,.mk-org .a1{transform-box:fill-box;transform-origin:50% 5%;animation:mkSw .5s ease-in-out infinite alternate-reverse}
+@keyframes mkSw{from{transform:rotate(-32deg)}to{transform:rotate(32deg)}}
+.mk-konf{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.mk-konf i{position:absolute;top:-2rem;width:.8rem;height:1.2rem;border-radius:2px;opacity:.9;animation:mkFall linear forwards}
+@keyframes mkFall{to{transform:translateY(110vh) rotate(720deg)}}
+.mk-antri{position:absolute;top:1.2rem;right:1.6rem;font-size:1rem;color:var(--ink3);font-weight:600}
+#suara{position:fixed;left:1.5rem;bottom:4rem;background:#000c;color:#fff;border:0;border-radius:.6rem;padding:.5rem .9rem;font:inherit;font-size:.9rem;cursor:pointer;z-index:40}
+#suara.on{background:#2E6B3Bcc}
 </style>
 </head>
 <body>
@@ -386,7 +413,9 @@ body.paused .paused-badge{display:inline-block}
     <div class="stat"><span id="asof"></span><span id="net"></span><span class="pill warn paused-badge">Dijeda</span></div>
   </footer>
 </div>
-<div class="hint" id="hint">F = layar penuh · Spasi = jeda · ← → = pindah slide · T = tema</div>
+<div id="masuk" aria-live="assertive"><div class="mk-konf" id="mkkonf"></div><div class="mk-card"><div class="mk-antri" id="mkq"></div><span class="mk-badge"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg><span id="mkjenis">Tamu</span></span><div class="mk-nama" id="mknama"></div><div class="mk-ket" id="mkket"></div><div class="mk-sudah">SUDAH MASUK</div><div class="mk-jalan"><div class="mk-org"><svg viewBox="0 0 60 60"><g class="bd"><circle cx="30" cy="9" r="6.5" fill="#E8B48C"/><path d="M23.5 8a6.5 6.5 0 0 1 13 0c-3-2-9-2-13 0z" fill="#3b2f2a"/><rect x="23" y="16" width="14" height="19" rx="5" fill="#2F6FB3"/><g class="a1"><rect x="19.5" y="17" width="5" height="16" rx="2.5" fill="#E8B48C"/></g><g class="a2"><rect x="35.5" y="17" width="5" height="16" rx="2.5" fill="#E8B48C"/></g></g><g class="l1"><rect x="24" y="34" width="6" height="20" rx="3" fill="#46576A"/><rect x="23" y="52" width="9" height="4" rx="2" fill="#222"/></g><g class="l2"><rect x="30" y="34" width="6" height="20" rx="3" fill="#33414f"/><rect x="29" y="52" width="9" height="4" rx="2" fill="#222"/></g></svg></div></div></div></div>
+<button id="suara" type="button" title="Klik sekali agar suara pemberitahuan aktif">Suara belum aktif (klik)</button>
+<div class="hint" id="hint">Klik layar sekali = suara aktif · F = layar penuh · Spasi = jeda · ← → = pindah slide · T = tema</div>
 <div id="gate"><form id="gf"><h1>Mode TV</h1><p>Masukkan kode akses (kode lihat) sekali saja. Kode diingat di browser ini.</p><input id="gk" type="password" autocomplete="off" placeholder="Kode akses"><div class="e" id="ge"></div><button>Tampilkan</button></form></div>
 
 <script>
@@ -424,6 +453,77 @@ body.paused .paused-badge{display:inline-block}
   function labelCap(s) { return s.charAt(0) + s.slice(1).toLowerCase(); }
   function gol(e) { return [e.g ? labelGol(e.g) : '', e.noreg, e.b ? titleCase(e.b) : ''].filter(Boolean).join(' · '); }
 
+
+  /* ---------- notifikasi tamu sudah masuk ---------- */
+  var seenDone = null, antri = [], tampil = false, suaraOn = false, vSuara = null;
+  function pilihSuara() {
+    try {
+      var vs = window.speechSynthesis.getVoices() || [], id = vs.filter(function (v) { return /^id([-_]|$)/i.test(v.lang); });
+      var pref = ['Google', 'Natural', 'Neural', 'Gadis', 'Damayanti', 'Andika', 'Microsoft'];
+      for (var i = 0; i < pref.length; i++) { var f = id.filter(function (v) { return v.name.indexOf(pref[i]) >= 0; })[0]; if (f) { vSuara = f; return; } }
+      vSuara = id[0] || null;
+    } catch (e) {}
+  }
+  function aktifkanSuara() {
+    if (suaraOn) return; suaraOn = true;
+    var b = document.getElementById('suara'); b.textContent = 'Suara aktif'; b.classList.add('on'); setTimeout(function () { b.style.display = 'none'; }, 2500);
+    try { var u = new SpeechSynthesisUtterance(' '); u.volume = 0; window.speechSynthesis.speak(u); } catch (e) {}
+    try { (window.__ac = window.__ac || new (window.AudioContext || window.webkitAudioContext)()).resume(); } catch (e) {}
+  }
+  function bunyi() {
+    try {
+      var ac = window.__ac; if (!ac) return; var t = ac.currentTime;
+      [[659.25, 0], [880, .16], [1318.5, .34]].forEach(function (n) {
+        var o = ac.createOscillator(), g = ac.createGain(); o.type = 'sine'; o.frequency.value = n[0];
+        g.gain.setValueAtTime(0, t + n[1]); g.gain.linearRampToValueAtTime(.22, t + n[1] + .03); g.gain.exponentialRampToValueAtTime(.001, t + n[1] + .7);
+        o.connect(g); g.connect(ac.destination); o.start(t + n[1]); o.stop(t + n[1] + .75);
+      });
+    } catch (e) {}
+  }
+  function ucapkan(teks) {
+    if (!suaraOn) return; try {
+      var ss = window.speechSynthesis; ss.cancel();
+      var u = new SpeechSynthesisUtterance(teks); u.lang = 'id-ID'; u.rate = .92; u.pitch = 1; u.volume = 1; if (vSuara) u.voice = vSuara;
+      setTimeout(function () { ss.speak(u); }, 700);
+    } catch (e) {}
+  }
+  function konfeti() {
+    var k = document.getElementById('mkkonf'); k.textContent = ''; var w = ['#2E6B3B', '#2F6FB3', '#B88A0B', '#6A55A8', '#C0392B', '#1F6F6B'];
+    for (var i = 0; i < 46; i++) { var c = document.createElement('i'); c.style.left = (Math.random() * 100) + '%'; c.style.background = w[i % w.length]; c.style.animationDuration = (2.6 + Math.random() * 2.4) + 's'; c.style.animationDelay = (Math.random() * .8) + 's'; k.appendChild(c); }
+  }
+  function tutupNotif() { document.getElementById('masuk').classList.remove('on'); tampil = false; setTimeout(nextNotif, 400); }
+  function nextNotif() {
+    if (tampil || !antri.length) return; var a = antri.shift(); tampil = true;
+    document.getElementById('mkjenis').textContent = a.jenis;
+    document.getElementById('mknama').textContent = a.nama;
+    document.getElementById('mkket').textContent = a.ket;
+    document.getElementById('mkq').textContent = antri.length ? 'Antrean: +' + antri.length : '';
+    konfeti(); document.getElementById('masuk').classList.add('on'); bunyi();
+    ucapkan(a.nama + ' sudah masuk.');
+    setTimeout(tutupNotif, 7500);
+  }
+  function cekMasuk(docs) {
+    var now = {}, baru = [];
+    var T = today();
+    (docs || []).forEach(function (d) {
+      var e = d.data || {}, tipe = d.coll === 'events' ? e.tipe : (d.coll === 'mutasi' ? 'mutasi' : '');
+      if (tipe !== 'sidang' && tipe !== 'periksa' && tipe !== 'mutasi') return;
+      var key = d.coll + '/' + d.id; now[key] = !!e.done;
+      if (seenDone && e.done && !seenDone[key] && e.tgl === T) {
+        var jenis = tipe === 'sidang' ? 'Sidang' : tipe === 'periksa' ? 'Pemeriksaan' : (e.arah === 'masuk' ? 'Mutasi masuk' : 'Mutasi keluar');
+        var ket = tipe === 'mutasi' ? ((e.asal && e.tujuan) ? e.asal + ' → ' + e.tujuan : (e.tujuan || e.asal || '')) : (e.instansi || '');
+        baru.push({ jenis: jenis, nama: titleCase(e.nama || ''), ket: ket, at: e.done_at || '' });
+      }
+    });
+    seenDone = now;
+    baru.sort(function (a, b) { return a.at < b.at ? -1 : a.at > b.at ? 1 : 0; });
+    baru.forEach(function (a) { antri.push(a); }); nextNotif();
+  }
+  window.addEventListener('pointerdown', aktifkanSuara); window.addEventListener('keydown', aktifkanSuara);
+  document.getElementById('suara').addEventListener('click', aktifkanSuara);
+  try { window.speechSynthesis.onvoiceschanged = pilihSuara; pilihSuara(); } catch (e) {}
+  window.__ujiMasuk = function (n) { suaraOn = suaraOn; antri.push({ jenis: 'Sidang', nama: n || 'Contoh Nama', ket: 'Pengadilan Negeri Bandung', at: '' }); nextNotif(); };
+
   /* ---------- data ---------- */
   function rpc(op) {
     return fetch(API, { method: 'POST', redirect: 'follow', credentials: 'omit', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -433,6 +533,7 @@ body.paused .paused-badge{display:inline-block}
   }
   function refresh() {
     return rpc('snapshot').then(function (r) {
+      cekMasuk(r.docs);
       var ev = [], lap = [];
       (r.docs || []).forEach(function (d) { if (d.coll === 'events') ev.push(d.data); else if (d.coll === 'laporan') lap.push(d.data); });
       lap.sort(function (a, b) { return a.tgl < b.tgl ? 1 : a.tgl > b.tgl ? -1 : 0; });
@@ -977,7 +1078,7 @@ body.paused .paused-badge{display:inline-block}
   function start() {
     if (!ls('kode')) return gate();
     refresh().catch(onErr);
-    if (!started) { started = true; setInterval(poll, 30000); setInterval(function () { if (loadedOnce) replan(true); }, 60000); }
+    if (!started) { started = true; setInterval(poll, 10000); setInterval(function () { if (loadedOnce) replan(true); }, 60000); }
   }
   applyTema(); tick(); setInterval(tick, 1000); wake(); awake();
   setTimeout(function () { document.getElementById('hint').classList.add('hide'); }, 8000);
