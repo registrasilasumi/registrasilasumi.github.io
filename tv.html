@@ -374,23 +374,13 @@ body.paused .paused-badge{display:inline-block}
 #masuk{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;background:#0009;backdrop-filter:blur(3px)}
 #masuk.on{display:flex;animation:mkIn .35s ease-out}
 @keyframes mkIn{from{opacity:0}to{opacity:1}}
-.mk-card{position:relative;width:min(78vw,1100px);background:var(--panel);border-radius:1.6rem;padding:2.6rem 3rem clamp(9rem,15vw,14rem);box-shadow:0 30px 80px #0007;overflow:hidden;text-align:center;border-top:.9rem solid #2E6B3B;animation:mkPop .5s cubic-bezier(.2,1.4,.4,1)}
+.mk-card{position:relative;width:min(78vw,1100px);background:var(--panel);border-radius:1.6rem;padding:2.6rem 3rem 3.2rem;box-shadow:0 30px 80px #0007;overflow:hidden;text-align:center;border-top:.9rem solid #2E6B3B;animation:mkPop .5s cubic-bezier(.2,1.4,.4,1)}
 @keyframes mkPop{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
 .mk-badge{display:inline-flex;align-items:center;gap:.7rem;background:#2E6B3B;color:#fff;font-weight:700;letter-spacing:.12em;text-transform:uppercase;font-size:clamp(1rem,1.8vw,1.6rem);padding:.5rem 1.4rem;border-radius:99px;animation:mkBeat 1.2s ease-in-out infinite}
 @keyframes mkBeat{50%{transform:scale(1.06)}}
 .mk-nama{font-size:clamp(2.4rem,6vw,5.6rem);font-weight:800;line-height:1.1;margin:1.4rem 0 .6rem;color:var(--ink)}
 .mk-ket{font-size:clamp(1.1rem,2.2vw,2rem);color:var(--ink2)}
 .mk-sudah{font-size:clamp(1.8rem,4vw,3.6rem);font-weight:800;color:#2E6B3B;margin-top:1.2rem;letter-spacing:.04em}
-.mk-jalan{position:absolute;left:0;right:0;bottom:0;height:clamp(7rem,12vw,12rem);overflow:hidden}
-.mk-jalan::after{content:"";position:absolute;left:0;right:0;bottom:1.1rem;height:.35rem;background:repeating-linear-gradient(90deg,var(--line) 0 2rem,transparent 2rem 3.4rem);opacity:.9}
-.mk-org{position:absolute;bottom:1.3rem;left:-10rem;width:clamp(5.5rem,9vw,9rem);height:clamp(5.5rem,9vw,9rem);animation:mkWalk 6.5s linear infinite}
-@keyframes mkWalk{from{left:-10rem}to{left:100%}}
-.mk-org svg{width:100%;height:100%;overflow:visible}
-.mk-org .bd{animation:mkBob .5s ease-in-out infinite;transform-origin:50% 60%}
-@keyframes mkBob{50%{transform:translateY(-3px)}}
-.mk-org .l1,.mk-org .a2{transform-box:fill-box;transform-origin:50% 5%;animation:mkSw .5s ease-in-out infinite alternate}
-.mk-org .l2,.mk-org .a1{transform-box:fill-box;transform-origin:50% 5%;animation:mkSw .5s ease-in-out infinite alternate-reverse}
-@keyframes mkSw{from{transform:rotate(-32deg)}to{transform:rotate(32deg)}}
 .mk-konf{position:absolute;inset:0;pointer-events:none;overflow:hidden}
 .mk-konf i{position:absolute;top:-2rem;width:.8rem;height:1.2rem;border-radius:2px;opacity:.9;animation:mkFall linear forwards}
 @keyframes mkFall{to{transform:translateY(110vh) rotate(720deg)}}
@@ -413,7 +403,7 @@ body.paused .paused-badge{display:inline-block}
     <div class="stat"><span id="asof"></span><span id="net"></span><span class="pill warn paused-badge">Dijeda</span></div>
   </footer>
 </div>
-<div id="masuk" aria-live="assertive"><div class="mk-konf" id="mkkonf"></div><div class="mk-card"><div class="mk-antri" id="mkq"></div><span class="mk-badge"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg><span id="mkjenis">Tamu</span></span><div class="mk-nama" id="mknama"></div><div class="mk-ket" id="mkket"></div><div class="mk-sudah">SUDAH DI P2U</div><div class="mk-jalan"><div class="mk-org"><svg viewBox="0 0 60 60"><g class="bd"><circle cx="30" cy="9" r="6.5" fill="#E8B48C"/><path d="M23.5 8a6.5 6.5 0 0 1 13 0c-3-2-9-2-13 0z" fill="#3b2f2a"/><rect x="23" y="16" width="14" height="19" rx="5" fill="#2F6FB3"/><g class="a1"><rect x="19.5" y="17" width="5" height="16" rx="2.5" fill="#E8B48C"/></g><g class="a2"><rect x="35.5" y="17" width="5" height="16" rx="2.5" fill="#E8B48C"/></g></g><g class="l1"><rect x="24" y="34" width="6" height="20" rx="3" fill="#46576A"/><rect x="23" y="52" width="9" height="4" rx="2" fill="#222"/></g><g class="l2"><rect x="30" y="34" width="6" height="20" rx="3" fill="#33414f"/><rect x="29" y="52" width="9" height="4" rx="2" fill="#222"/></g></svg></div></div></div></div>
+<div id="masuk" aria-live="assertive"><div class="mk-konf" id="mkkonf"></div><div class="mk-card"><div class="mk-antri" id="mkq"></div><span class="mk-badge"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg><span id="mkjenis">Tamu</span></span><div class="mk-nama" id="mknama"></div><div class="mk-ket" id="mkket"></div><div class="mk-sudah">SUDAH DI P2U</div></div></div>
 <button id="suara" type="button" title="Klik sekali agar suara pemberitahuan aktif">Suara belum aktif (klik)</button>
 <div class="hint" id="hint">Klik layar sekali = suara aktif · F = layar penuh · Spasi = jeda · ← → = pindah slide · T = tema</div>
 <div id="gate"><form id="gf"><h1>Mode TV</h1><p>Masukkan kode akses (kode lihat) sekali saja. Kode diingat di browser ini.</p><input id="gk" type="password" autocomplete="off" placeholder="Kode akses"><div class="e" id="ge"></div><button>Tampilkan</button></form></div>
