@@ -1883,11 +1883,10 @@ function bukaLepas(e) {
     if (!wr()) add(root, h('div', { class: 'msg warn', text: 'Akun Anda hanya bisa melihat. Unggah dan ubah data dinonaktifkan.' }));
     add(root, h('div', { class: 'card' },
       step(1, 'Excel dari SDP', 'Menimpa daftar penghuni. Penghuni baru dan yang sudah tidak ada akan dilaporkan sebelum disimpan.', stExcel()),
-      step(2, 'Laporan harian', 'Tempel teks laporan dari WA. Angka, rincian, dan nama yang di luar terbaca otomatis.', stLaporan()),
-      step(3, 'Susulan: WBP keluar setelah laporan pagi', 'Tempel daftar WBP yang keluar setelah laporan harian pagi dibuat (sidang, berobat, bebas, dipindah, dan lainnya). Jumlah di dalam dan di luar pada laporan hari itu ikut diperbarui. Hasilnya Anda cek dulu.', stSusulan()),
-      step(4, 'Surat panggilan dan mutasi', 'PDF atau foto. Sidang, pemeriksaan, atau rencana mutasi (pemindahan masuk atau keluar) ditentukan dari isi surat. Dibaca oleh Claude, hasilnya Anda cek dulu.', stSurat()),
-      step(5, 'Foto papan bebas', 'Foto papan Daftar Narapidana Bebas. Tanggal bebas hanya diambil dari foto ini.', stBebas()),
-      step(6, 'Laporan atensi (WBP baru)', 'Tempel teks Laporan Atensi Pimpinan tentang penerimaan terpidana. Boleh beberapa laporan sekaligus. Hasilnya Anda cek dulu sebelum disimpan.', stMasuk())));
+      step(2, 'Laporan harian', 'Tempel teks laporan dari WA. Angka, rincian, dan nama yang di luar terbaca otomatis.', h('div', null, stLaporan(), h('div', { style: 'border-top:1px solid var(--line);margin-top:16px;padding-top:12px' }, h('b', { text: 'Susulan: WBP keluar setelah laporan pagi' }), h('p', { text: 'Tempel daftar WBP yang keluar setelah laporan harian pagi dibuat (sidang, berobat, bebas, dipindah, dan lainnya). Jumlah di dalam dan di luar pada laporan hari itu ikut diperbarui. Hasilnya Anda cek dulu.' }), stSusulan()))),
+      step(3, 'Surat panggilan dan mutasi', 'PDF atau foto. Sidang, pemeriksaan, atau rencana mutasi (pemindahan masuk atau keluar) ditentukan dari isi surat. Dibaca oleh Claude, hasilnya Anda cek dulu.', stSurat()),
+      step(4, 'Foto papan bebas', 'Foto papan Daftar Narapidana Bebas. Tanggal bebas hanya diambil dari foto ini.', stBebas()),
+      step(5, 'Laporan atensi (WBP baru)', 'Tempel teks Laporan Atensi Pimpinan tentang penerimaan terpidana. Boleh beberapa laporan sekaligus. Hasilnya Anda cek dulu sebelum disimpan.', stMasuk())));
     return root;
     function step(n, t, d, body) { return h('div', { class: 'step' }, h('div', { class: 'n', text: n }), h('div', null, h('b', { text: t }), h('p', { text: d }), body)); }
   }
@@ -2020,7 +2019,7 @@ function bukaLepas(e) {
         tb.append(h('tr', null, h('td', null, ck), h('td', null, nmI), h('td', null, kt), h('td', null, al), h('td', { text: it.noreg ? reg(it.noreg) : 'Belum cocok dengan SDP' })));
       });
       add(box, h('div', { class: 'tw', style: 'margin-top:8px' }, h('table', null, h('thead', null, h('tr', null, ['', 'Nama', 'Kategori', 'Keterangan', 'Register'].map(function (t) { return h('th', { text: t }); }))), tb)));
-      if (!lap) add(box, h('div', { class: 'msg warn', text: 'Belum ada laporan harian untuk tanggal ' + P.tglID(st.tgl || tgl) + '. Simpan laporan pagi dulu di langkah 2.' }));
+      if (!lap) add(box, h('div', { class: 'msg warn', text: 'Belum ada laporan harian untuk tanggal ' + P.tglID(st.tgl || tgl) + '. Simpan laporan pagi dulu di atas.' }));
       add(box, h('div', { style: 'margin-top:8px' }, h('button', { class: 'btn pri', disabled: st.busy || !wr() || !lap, text: st.busy ? 'Menyimpan…' : 'Tambahkan ' + st.items.filter(function (i) { return i.on; }).length + ' orang ke laporan', onclick: saveSusulan })));
     }
     return box;
