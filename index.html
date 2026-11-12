@@ -1360,15 +1360,14 @@ function bukaLepas(e) {
     return root;
   }
 
-  /* ---------- Agenda registrasi (untuk P2U dan petugas): satu hari per tampilan ---------- */
+  /* ---------- Agenda registrasi (untuk P2U dan petugas): hanya hari ini ---------- */
   function geserHari(iso, n) {
     var d = new Date(iso + 'T12:00:00'); d.setDate(d.getDate() + n);
     return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
   }
   function vAgenda() {
     var T = today(), root = h('div');
-    if (!ui.agTgl || !/^\d{4}-\d{2}-\d{2}$/.test(ui.agTgl)) ui.agTgl = T;
-    var D = ui.agTgl, all = [];
+    var D = T, all = [];
     S.events.forEach(function (e) {
       if (e.tipe !== 'sidang' && e.tipe !== 'periksa') return;
       all.push({ k: e.tipe, tgl: e.tgl || '', jam: e.jam || '', nama: nm(who(e).nama), ket: e.instansi || '', mode: e.mode, done: !!e.done, ref: 'events/' + e.id });
@@ -1378,15 +1377,7 @@ function bukaLepas(e) {
     });
     var hari = all.filter(function (a) { return a.tgl === D; });
     var f = ui.agj || '';
-    function ke(t) { ui.agTgl = t; render(); }
-    var tg = h('input', { type: 'date', value: D, 'aria-label': 'Pilih tanggal agenda', onchange: function () { if (tg.value) ke(tg.value); } });
-    add(root, h('div', { class: 'card' },
-      h('div', { class: 'bar2' },
-        h('button', { class: 'btn', type: 'button', text: '‹ Sebelumnya', onclick: function () { ke(geserHari(D, -1)); } }),
-        tg,
-        h('button', { class: 'btn', type: 'button', text: 'Berikutnya ›', onclick: function () { ke(geserHari(D, 1)); } }),
-        D !== T ? h('button', { class: 'btn pri', type: 'button', text: 'Hari ini', onclick: function () { ke(T); } }) : null),
-      h('h2', { text: P.tglID(D, true) + ' · ' + when(D), style: 'margin:12px 0 8px' })));
+    add(root, h('div', { class: 'card' }, h('h2', { text: 'Agenda ' + P.tglID(D, true), style: 'margin:0' })));
     function pill(t, k) { return h('button', { class: 'pill', 'aria-pressed': f === k ? 'true' : 'false', onclick: function () { ui.agj = k; render(); } }, t); }
     var cnt = function (k) { return hari.filter(function (a) { return !k || a.k === k; }).length; };
     var tampil = hari.filter(function (a) { return !f || a.k === f; }).sort(function (a, b) { return (a.jam || '99').localeCompare(b.jam || '99'); });
@@ -1403,7 +1394,7 @@ function bukaLepas(e) {
         return ck;
       } }
     ];
-    add(root, h('div', { class: 'card' }, tampil.length ? table(cols, tampil, function (a) { return a.done ? 'done' : ''; }) : empty('Tidak ada agenda pada hari ini', 'Pakai tombol Sebelumnya atau Berikutnya untuk pindah hari.')));
+    add(root, h('div', { class: 'card' }, tampil.length ? table(cols, tampil, function (a) { return a.done ? 'done' : ''; }) : empty('Tidak ada agenda hari ini', 'Sidang, pemeriksaan, dan mutasi hari ini akan tampil di sini.')));
     return root;
   }
 
