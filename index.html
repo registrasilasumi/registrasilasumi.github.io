@@ -674,9 +674,9 @@ window.API_URL = 'https://script.google.com/macros/s/AKfycbz2Ji6knZXXHTr5a3bG1If
 (function () {
   'use strict';
   var P = window.P;
-  var S = { master: [], nchunks: 0, meta: null, events: [], masuk: [], lap: [], loaded: {}, canWrite: true, db: null, sample: null, err: '' };
+  var S = { master: [], nchunks: 0, meta: null, events: [], masuk: [], mutasi: [], lap: [], loaded: {}, canWrite: true, db: null, sample: null, err: '' };
   var ui = { tab: 'beranda', q: '', fb: '', fg: '', fj: '', page: 1, bulan: '', bket: '', lapTgl: '', open: '', up: {}, redit: '', rdraft: {}, sdraft: {}, rfull: {}, rq: '' };
-  var TABS = [['beranda', 'Beranda'], ['sidang', 'Sidang'], ['periksa', 'Pemeriksaan'], ['bebas', 'Bebas'], ['masuk', 'WBP Baru'], ['penghuni', 'Penghuni'], ['keluar', 'WBP di Luar'], ['laporan', 'Laporan'], ['unggah', 'Unggah']];
+  var TABS = [['beranda', 'Beranda'], ['sidang', 'Sidang'], ['periksa', 'Pemeriksaan'], ['bebas', 'Bebas'], ['masuk', 'WBP Baru'], ['penghuni', 'Penghuni'], ['keluar', 'WBP di Luar'], ['mutasi', 'Rencana Mutasi'], ['laporan', 'Laporan'], ['unggah', 'Unggah']];
   var $view = document.getElementById('view');
 
   function h(tag, a) {
@@ -787,6 +787,10 @@ window.API_URL = 'https://script.google.com/macros/s/AKfycbz2Ji6knZXXHTr5a3bG1If
       S.masuk = s.docs.map(function (d) { return Object.assign({ id: d.id }, d.data() || {}); });
       if (ui.tab === 'masuk' || ui.tab === 'laporan') render();
     }, function () { /* koleksi belum ada: abaikan */ });
+    S.db.collection('mutasi').onSnapshot(function (s) {
+      S.mutasi = s.docs.map(function (d) { return Object.assign({ id: d.id }, d.data() || {}); });
+      if (ui.tab === 'mutasi') render();
+    }, function () { /* koleksi belum ada: abaikan */ });
     S.db.collection('laporan').orderBy('tgl', 'desc').limit(400).onSnapshot(function (s) {
       S.lap = s.docs.map(function (d) { return d.data(); });
       fin('lap');
@@ -813,9 +817,13 @@ window.API_URL = 'https://script.google.com/macros/s/AKfycbz2Ji6knZXXHTr5a3bG1If
   function visTabs() { return TABS.filter(function (t) { return (t[0] !== 'unggah' && t[0] !== 'laporan') || wr(); }); }
   function nav() {
     var n = clear(document.getElementById('nav'));
-    visTabs().forEach(function (t) {
-      n.append(h('button', { role: 'tab', 'aria-selected': ui.tab === t[0] ? 'true' : 'false', onclick: function () { go(t[0]); } }, t[1]));
+    var vis = visTabs(), utama = BOTTOM.map(function (k) { return vis.filter(function (t) { return t[0] === k; })[0]; }).filter(Boolean);
+    var sisa = vis.filter(function (t) { return BOTTOM.indexOf(t[0]) < 0; });
+    utama.forEach(function (t) {
+      n.append(h('button', { role: 'tab', 'aria-selected': ui.tab === t[0] && !ui.menuOpen ? 'true' : 'false', onclick: function () { ui.menuOpen = false; go(t[0]); } }, t[1]));
     });
+    var diSisa = sisa.some(function (t) { return t[0] === ui.tab; });
+    n.append(h('button', { role: 'tab', id: 'navmore', 'aria-haspopup': 'true', 'aria-expanded': ui.menuOpen ? 'true' : 'false', 'aria-selected': ui.menuOpen || diSisa ? 'true' : 'false', onclick: function () { ui.menuOpen = !ui.menuOpen; nav(); } }, 'Menu ▾'));
     bnav();
   }
   /* HP: menu utama di bawah layar. Isinya 4 tab utama + Menu untuk sisanya */
@@ -842,6 +850,8 @@ window.API_URL = 'https://script.google.com/macros/s/AKfycbz2Ji6knZXXHTr5a3bG1If
       var sh = h('div', { class: 'sheet' });
       sisa.forEach(function (t) { sh.append(h('button', { 'aria-selected': ui.tab === t[0] ? 'true' : 'false', onclick: function () { ui.menuOpen = false; go(t[0]); } }, t[1])); });
       sheet.append(sh);
+      var mb = document.getElementById('navmore');
+      if (window.innerWidth > 640 && mb) { var r = mb.getBoundingClientRect(); sh.style.top = Math.round(r.bottom + 4) + 'px'; sh.style.left = Math.max(8, Math.min(Math.round(r.left), window.innerWidth - 248)) + 'px'; }
     }
   }
   function go(t) {
@@ -1346,6 +1356,52 @@ function bukaLepas(e) {
     return root;
   }
 
+  /* ---------- Rencana Mutasi ---------- */
+  function vMutasi() {
+    var all = S.mutasi.slice(), root = h('div');
+    if (!all.length) return h('div', { class: 'card' }, empty('Belum ada rencana mutasi', wr() ? 'Unggah surat rencana pemindahan di tab Unggah (langkah 6). Pemindahan masuk dan keluar akan tampil di sini.' : 'Rencana mutasi akan tampil di sini setelah dimasukkan petugas.'));
+    if (!ui.marah) ui.marah = '';
+    var nKeluar = all.filter(function (e) { return e.arah === 'keluar'; }).length, nMasuk = all.length - nKeluar;
+    var rows = all.filter(function (e) { return !ui.marah || e.arah === ui.marah; }).sort(function (a, b) {
+      if (!!a.done !== !!b.done) return a.done ? 1 : -1;
+      if (!a.tgl !== !b.tgl) return a.tgl ? -1 : 1;
+      return (a.tgl || '').localeCompare(b.tgl || '');
+    });
+    function pill(t, k) { return h('button', { class: 'pill', 'aria-pressed': ui.marah === k ? 'true' : 'false', onclick: function () { ui.marah = k; render(); } }, t); }
+    function hapus(e) {
+      if (!wr()) return null;
+      var b = h('button', { class: 'ghost', text: 'Hapus' }), armed = false, tm;
+      b.addEventListener('click', function () {
+        if (!armed) { armed = true; b.textContent = 'Yakin?'; tm = setTimeout(function () { armed = false; b.textContent = 'Hapus'; }, 3000); return; }
+        clearTimeout(tm);
+        S.db.doc('mutasi/' + e.id).delete().catch(function (er) { banner('Gagal menghapus: ' + errText(er), 'bad'); });
+      });
+      return b;
+    }
+    var cols = [
+      { h: 'Tanggal rencana', f: function (e) { return e.tgl ? [P.tglID(e.tgl), h('div', { class: 'faint', text: when(e.tgl) })] : h('span', { class: 'faint', text: 'Belum ditentukan' }); } },
+      { h: 'Nama', f: function (e) { var m = e.noreg ? P.matchReg(e.noreg, S.master) : null; return m ? nm(m.n) : e.nama; } },
+      { h: 'Register', c: 'mono', hm: true, f: function (e) { return e.noreg ? reg(e.noreg) : badge(e.arah === 'masuk' ? 'Belum di SDP' : 'Belum dicocokkan', 'warn'); } },
+      { h: 'Arah', f: function (e) { return badge(e.arah === 'masuk' ? 'Masuk' : 'Keluar', e.arah === 'masuk' ? 'blue' : 'gold'); } },
+      { h: 'Dari', f: function (e) { return e.asal || ''; } },
+      { h: 'Ke', f: function (e) { return e.tujuan || ''; } },
+      { h: 'Alasan', hm: true, f: function (e) { return e.alasan || ''; } },
+      { h: 'Surat', c: 'mono', hm: true, f: function (e) { return [e.surat || '', h('div', { class: 'faint', text: e.suratTgl ? P.tglID(e.suratTgl) : '' })]; } },
+      { h: 'Sudah dilaksanakan', c: 'ns', f: function (e) {
+        var ck = h('input', { type: 'checkbox', checked: !!e.done, disabled: !wr(), 'aria-label': 'Sudah dilaksanakan: ' + e.nama, onchange: function () {
+          S.db.doc('mutasi/' + e.id).update({ done: ck.checked, done_at: ck.checked ? new Date().toISOString() : '' }).catch(function (er) { ck.checked = !ck.checked; banner('Gagal menyimpan: ' + errText(er), 'bad'); });
+        } });
+        return ck;
+      } },
+      { h: '', c: 'ns', hm: true, f: hapus }
+    ];
+    var belum = all.filter(function (e) { return !e.done; }).length;
+    add(root, h('div', { class: 'card' }, h('div', { class: 'bar2' }, pill('Semua ' + all.length, ''), pill('Keluar ' + nKeluar, 'keluar'), pill('Masuk ' + nMasuk, 'masuk'), h('span', { class: 'faint', text: belum + ' belum dilaksanakan' })),
+      rows.length ? table(cols, rows, function (e) { return e.done ? 'done' : ''; }) : empty('Tidak ada data'),
+      h('div', { class: 'note', text: 'Sumber: surat rencana pemindahan yang diunggah di tab Unggah. Centang "Sudah dilaksanakan" setelah pemindahan selesai.' })));
+    return root;
+  }
+
   /* ---------- Sidang / Pemeriksaan ---------- */
   function vJadwal(tipe) {
     var T = today(), all = S.events.filter(function (e) { return e.tipe === tipe; });
@@ -1787,7 +1843,8 @@ function bukaLepas(e) {
       step(2, 'Laporan harian', 'Tempel teks laporan dari WA. Angka, rincian, dan nama yang di luar terbaca otomatis.', stLaporan()),
       step(3, 'Surat panggilan', 'PDF atau foto. Sidang atau pemeriksaan ditentukan dari isi surat. Dibaca oleh Claude, hasilnya Anda cek dulu.', stSurat()),
       step(4, 'Foto papan bebas', 'Foto papan Daftar Narapidana Bebas. Tanggal bebas hanya diambil dari foto ini.', stBebas()),
-      step(5, 'Laporan atensi (WBP baru)', 'Tempel teks Laporan Atensi Pimpinan tentang penerimaan terpidana. Boleh beberapa laporan sekaligus. Hasilnya Anda cek dulu sebelum disimpan.', stMasuk())));
+      step(5, 'Laporan atensi (WBP baru)', 'Tempel teks Laporan Atensi Pimpinan tentang penerimaan terpidana. Boleh beberapa laporan sekaligus. Hasilnya Anda cek dulu sebelum disimpan.', stMasuk()),
+      step(6, 'Surat mutasi (pemindahan)', 'PDF atau foto surat rencana pemindahan, masuk ke Sukamiskin ataupun keluar. Arah, tanggal, dan lapas asal/tujuan dibaca dari isi surat. Dibaca oleh Claude, hasilnya Anda cek dulu.', stMutasi())));
     return root;
     function step(n, t, d, body) { return h('div', { class: 'step' }, h('div', { class: 'n', text: n }), h('div', null, h('b', { text: t }), h('p', { text: d }), body)); }
   }
@@ -2056,6 +2113,90 @@ function bukaLepas(e) {
     drawUp();
   }
 
+  /* Surat mutasi (pemindahan masuk atau keluar) */
+  function stMutasi() {
+    var st = ui.up.mt || {}, box = h('div');
+    if (aiOn()) add(box, pick('f-mt', '.pdf,image/*,.heic,.heif', true, readMutasi, 'Pilih surat mutasi (PDF atau foto)'));
+    else add(box, pasteBox('mt', 'Buka Pembaca dokumen di claude.ai, unggah suratnya, salin hasilnya, lalu tempel di sini.', pasteMutasi));
+    add(box, status(st));
+    if (st.items && st.items.length) {
+      var tb = h('tbody');
+      st.items.forEach(function (it) {
+        var ck = h('input', { type: 'checkbox', checked: it.on, 'aria-label': 'Simpan ' + it.nama, onchange: function () { it.on = ck.checked; } });
+        function tx(k, w, label) { return h('input', { type: 'text', value: it[k] || '', style: 'width:' + w, 'aria-label': label, onchange: function (e) { it[k] = e.target.value; } }); }
+        var ar = h('select', { 'aria-label': 'Arah pemindahan', onchange: function () { it.arah = ar.value; } }, h('option', { value: 'keluar', text: 'Keluar dari Sukamiskin' }), h('option', { value: 'masuk', text: 'Masuk ke Sukamiskin' })); ar.value = it.arah;
+        var tg = h('input', { type: 'date', value: it.tgl, 'aria-label': 'Tanggal rencana', onchange: function () { it.tgl = tg.value; } });
+        var mt = h('select', { 'aria-label': 'Cocok dengan', onchange: function () { it.noreg = mt.value; } }, h('option', { value: '', text: 'Tidak dicocokkan' }), it.cands.map(function (c) { return h('option', { value: c.row.k, text: nm(c.row.n).slice(0, 34) + ' · ' + reg(c.row.k) }); })); mt.value = it.noreg || '';
+        tb.append(h('tr', null, h('td', null, ck), h('td', null, tx('nama', '190px', 'Nama'), h('div', { class: 'faint mono', text: it.surat })), h('td', null, ar), h('td', null, tg), h('td', null, tx('asal', '160px', 'Lapas asal')), h('td', null, tx('tujuan', '160px', 'Lapas tujuan')), h('td', null, tx('alasan', '170px', 'Alasan')), h('td', null, mt)));
+      });
+      add(box, h('div', { class: 'tw', style: 'margin-top:8px' }, h('table', null, h('thead', null, h('tr', null, ['', 'Nama di surat', 'Arah', 'Tanggal rencana', 'Lapas asal', 'Lapas tujuan', 'Alasan', 'Cocok dengan'].map(function (t) { return h('th', { text: t }); }))), tb)));
+      add(box, h('div', { class: 'note', text: 'Tanggal rencana boleh dikosongkan kalau surat belum menyebut jadwalnya. Pemindahan masuk biasanya belum ada di daftar penghuni, jadi "Tidak dicocokkan" tidak apa-apa.' }));
+      add(box, h('div', { style: 'margin-top:8px' }, h('button', { class: 'btn pri', disabled: st.busy || !wr(), text: st.busy ? 'Menyimpan…' : 'Simpan rencana mutasi', onclick: saveMutasi })));
+    }
+    return box;
+  }
+  async function readMutasi(files) {
+    setU('mt', { items: null, msg: 'Membaca surat dengan Claude. Bisa memakan waktu sekitar satu menit.', kind: '' });
+    try {
+      var g = await getSample(), text = '', images = [];
+      for (var i = 0; i < files.length; i++) {
+        var f = files[i];
+        if (/pdf/i.test(f.type) || /\.pdf$/i.test(f.name)) {
+          var r = await pdfInputs(f, g.max);
+          if (r.text) text += '--- ' + f.name + ' ---\n' + r.text.slice(0, 40000) + '\n';
+          images = images.concat(r.images);
+        } else images.push(await toJpeg(f));
+      }
+      images = images.slice(0, g.max);
+      var prompt = 'Kamu membantu petugas registrasi Lapas Kelas I Sukamiskin Bandung membaca surat rencana pemindahan (mutasi) warga binaan, baik yang dipindah KELUAR dari Sukamiskin maupun yang dipindah MASUK ke Sukamiskin.\n' +
+        'Balas hanya dengan JSON: {"surat":[{"arah":"keluar","nomor_surat":"","tanggal_surat":"YYYY-MM-DD","tanggal_rencana":"YYYY-MM-DD","lapas_asal":"","lapas_tujuan":"","alasan":"","nama":[""]}]}\n' +
+        'Aturan:\n- arah "keluar" bila warga binaan dipindah dari Lapas Kelas I Sukamiskin ke tempat lain, "masuk" bila dipindah dari tempat lain ke Lapas Kelas I Sukamiskin. Tentukan dari lapas asal dan tujuan di surat.\n' +
+        '- tanggal_surat: tanggal surat dibuat atau ditandatangani. tanggal_rencana: tanggal pemindahan atau keberangkatan bila disebut, kosongkan bila tidak ada.\n' +
+        '- lapas_asal dan lapas_tujuan: nama lapas atau rutan seperti tertulis di surat.\n- alasan: alasan atau dasar pemindahan singkat (misalnya keamanan, kapasitas, permohonan sendiri, kepentingan pembinaan), kosongkan bila tidak disebut.\n' +
+        '- nama: semua warga binaan yang dipindahkan, ditulis persis seperti di surat. Jangan menebak.\n- Satu objek untuk setiap surat atau setiap kelompok dengan arah dan tujuan yang sama. Kosongkan string yang tidak ada di surat.\n' +
+        (text ? '\nIsi surat:\n' + text : '\nSurat ada pada gambar terlampir.');
+      var out = await g.s.json(prompt, images.length ? { images: images } : {});
+      finishMutasi(mutasiItems(out));
+    } catch (e) { setU('mt', { items: null, msg: errText(e), kind: 'bad' }); }
+  }
+  function mutasiItems(out) {
+    var list = (out && out.surat) || (Array.isArray(out) ? out : []), items = [];
+    list.forEach(function (sr) {
+      (sr.nama || []).forEach(function (n) {
+        var cands = P.candidates(n, S.master, 4);
+        items.push({ on: true, nama: String(n), arah: sr.arah === 'masuk' ? 'masuk' : 'keluar', tgl: P.dateISO(sr.tanggal_rencana) || '', asal: String(sr.lapas_asal || ''), tujuan: String(sr.lapas_tujuan || ''), alasan: String(sr.alasan || ''), surat: String(sr.nomor_surat || ''), suratTgl: P.dateISO(sr.tanggal_surat) || '', cands: cands, noreg: cands.length && cands[0].score >= 0.8 ? cands[0].row.k : '' });
+      });
+    });
+    return items;
+  }
+  function finishMutasi(items) {
+    if (!items.length) return setU('mt', { items: null, msg: 'Tidak ada nama yang terbaca dari surat. Periksa hasil bacaannya.', kind: 'warn' });
+    setU('mt', { items: items, busy: false, msg: items.length + ' orang terbaca. Cek arah, tanggal, dan lapas asal/tujuan, lalu simpan.', kind: 'ok' });
+  }
+  function pasteMutasi(text) {
+    if (!text.trim()) return setU('mt', { items: null, msg: 'Tempel hasil bacaan dulu.', kind: 'warn' });
+    var out;
+    try { out = P.parseLoose(text); } catch (e) { return setU('mt', { items: null, msg: 'Hasil tidak terbaca sebagai data. Salin ulang seluruh hasil dari Pembaca dokumen.', kind: 'bad' }); }
+    if (!(out && (out.surat || Array.isArray(out)))) return setU('mt', { items: null, msg: 'Ini bukan hasil bacaan surat mutasi.', kind: 'warn' });
+    finishMutasi(mutasiItems(out));
+  }
+  async function saveMutasi() {
+    var st = ui.up.mt, todo = st.items.filter(function (i) { return i.on; }), n = 0;
+    var bad = todo.filter(function (i) { return !String(i.nama || '').trim(); });
+    if (bad.length) return setU('mt', { msg: 'Ada baris tanpa nama. Isi namanya atau hapus centangnya.', kind: 'warn' });
+    setU('mt', { busy: true });
+    try {
+      for (var k = 0; k < todo.length; k++) {
+        var i = todo[k], id = evId('mutasi-' + i.arah, i.noreg, i.nama, i.tgl || i.suratTgl || 'tanpa-tanggal');
+        var old = S.mutasi.filter(function (x) { return x.id === id; })[0] || {};
+        await S.db.doc('mutasi/' + id).set({ arah: i.arah, tgl: i.tgl || '', nama: nm(i.nama), noreg: i.noreg || '', asal: i.asal || '', tujuan: i.tujuan || '', alasan: i.alasan || '', surat: i.surat || '', suratTgl: i.suratTgl || '', done: old.done || false, done_at: old.done_at || '', sumber: 'surat', at: new Date().toISOString() });
+        n++;
+      }
+      ui.up.mt = { msg: n + ' rencana mutasi tersimpan.', kind: 'ok' };
+    } catch (e) { ui.up.mt = Object.assign({}, st, { busy: false, msg: 'Gagal menyimpan: ' + errText(e), kind: 'bad' }); }
+    drawUp();
+  }
+
   /* Foto papan bebas */
   function stBebas() {
     var st = ui.up.fb || {}, box = h('div');
@@ -2138,7 +2279,7 @@ function bukaLepas(e) {
     if (!(S.loaded.master && S.loaded.events && S.loaded.lap)) return;
     var v;
     try {
-      v = ui.tab === 'beranda' ? vBeranda() : ui.tab === 'sidang' ? vJadwal('sidang') : ui.tab === 'periksa' ? vJadwal('periksa') : ui.tab === 'bebas' ? vBebas() : ui.tab === 'masuk' ? vMasuk() : ui.tab === 'penghuni' ? vPenghuni() : ui.tab === 'keluar' ? vKeluar() : ui.tab === 'laporan' ? vLaporan() : vUnggah();
+      v = ui.tab === 'beranda' ? vBeranda() : ui.tab === 'sidang' ? vJadwal('sidang') : ui.tab === 'periksa' ? vJadwal('periksa') : ui.tab === 'bebas' ? vBebas() : ui.tab === 'masuk' ? vMasuk() : ui.tab === 'penghuni' ? vPenghuni() : ui.tab === 'keluar' ? vKeluar() : ui.tab === 'mutasi' ? vMutasi() : ui.tab === 'laporan' ? vLaporan() : vUnggah();
     } catch (e) { v = h('div', { class: 'msg bad', text: 'Tampilan gagal dibuat: ' + (e.message || e) }); }
     clear($view).append(v);
     document.getElementById('ptitle').textContent = 'Registrasi Lapas Kelas I Sukamiskin · ' + (TABS.filter(function (t) { return t[0] === ui.tab; })[0] || ['', ''])[1] + ' · ' + P.tglID(today(), true);
@@ -2216,6 +2357,13 @@ function bukaLepas(e) {
   #bmenu.open{display:block;position:fixed;inset:0;z-index:19;background:rgba(0,0,0,.45)}
   #bmenu .sheet{position:absolute;left:0;right:0;top:calc(58px + env(safe-area-inset-top));background:var(--panel);border-bottom:1px solid var(--line);border-radius:0 0 12px 12px;padding:10px 6px 6px}
   #bmenu .sheet button{display:block;width:100%;text-align:left;background:none;border:0;color:var(--ink);font:inherit;font-size:16px;padding:14px 16px;min-height:48px;border-radius:8px;cursor:pointer}
+  #bmenu .sheet button[aria-selected="true"]{background:var(--accentbg);font-weight:500}
+}
+@media (min-width:641px){
+  #bmenu.open{display:block;position:fixed;inset:0;z-index:30;background:transparent}
+  #bmenu .sheet{position:fixed;width:240px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:6px;box-shadow:0 10px 30px rgba(0,0,0,.28)}
+  #bmenu .sheet button{display:block;width:100%;text-align:left;background:none;border:0;color:var(--ink);font:inherit;font-size:14px;padding:10px 12px;min-height:40px;border-radius:6px;cursor:pointer}
+  #bmenu .sheet button:hover{background:var(--accentbg)}
   #bmenu .sheet button[aria-selected="true"]{background:var(--accentbg);font-weight:500}
 }
 @media print{#bnav,#bmenu{display:none!important}}
