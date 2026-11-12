@@ -2033,18 +2033,37 @@ function bukaLepas(e) {
     if (/\bilb\b|luar biasa/i.test(label)) return 'ILB';
     return 'Alasan lain';
   }
+  function susulanInfo(text) {
+    var t = String(text || ''), o = { tgl: '', jam: '' };
+    var dm = t.match(/(\d{1,2})\s+(Januari|Februari|Maret|April|Mei|Juni|Juli|Agustus|September|Oktober|November|Desember)\s+(\d{4})/i);
+    if (dm) { var mi = P.BULAN.map(function (x) { return String(x).toLowerCase(); }).indexOf(dm[2].toLowerCase()); if (mi >= 0) o.tgl = dm[3] + '-' + ('0' + (mi + 1)).slice(-2) + '-' + ('0' + dm[1]).slice(-2); }
+    var jm = t.match(/waktu\s*:?\s*(\d{1,2})[.:](\d{2})/i);
+    if (jm) o.jam = ('0' + jm[1]).slice(-2) + '.' + jm[2];
+    return o;
+  }
+  /* Format WA: judul kategori diakhiri "An;" lalu nama bernomor di bawahnya. Baris Hari/Tanggal, Waktu, dan judul laporan dilewati. */
   function susulanLokal(text) {
-    var out = [];
+    var out = [], kat = 'Alasan lain', ket = '';
     String(text || '').replace(/\r/g, '').split('\n').forEach(function (ln) {
-      var t = ln.trim().replace(/^(\d+\s*[.)]|[-•*])\s*/, '').trim();
-      if (!t || /:\s*$/.test(t) || /^(laporan|keluar|susulan|tambahan|update|tgl|tanggal|jam|hari|izin|selamat|demikian|terima kasih)\b/i.test(t)) return;
+      var raw = ln.trim();
+      if (!raw) return;
+      var num = /^(\d+\s*[.)]|[-•*])\s*/.test(raw), t = raw.replace(/^(\d+\s*[.)]|[-•*])\s*/, '').trim();
+      if (!t) return;
+      if (/^(laporan|susulan|tambahan|update|hari|tanggal|tgl|waktu|jam|pukul|izin|selamat|demikian|terima kasih|wbp\s+keluar|keluar\s*:?$)/i.test(t)) return;
+      if (!num && (/\ban\s*[;:.]?\s*$/i.test(t) || /:\s*$/.test(t))) {
+        ket = t.replace(/\ban\s*[;:.]?\s*$/i, '').replace(/[:;]\s*$/, '').trim();
+        kat = katSusulan(ket);
+        return;
+      }
       var m = t.match(/^(.+?)\s*(?:[-–—(]|\bdalam rangka\b|\buntuk\b)\s*(.+?)\)?\s*$/i);
-      out.push({ nama: (m ? m[1] : t).trim(), alasan: m ? m[2].trim() : '', kat: katSusulan(m ? m[2] : '') });
+      var nama = (m ? m[1] : t).trim(), alasan = m ? m[2].trim() : ket;
+      out.push({ nama: nama, alasan: alasan, kat: m ? katSusulan(m[2] + ' ' + ket) : kat });
     });
     return out;
   }
   async function bacaSusulan() {
-    var st = ui.up.su || {}, text = st.paste || '', tgl = susulanTgl();
+    var st = ui.up.su || {}, text = st.paste || '', tgl = susulanTgl(), info = susulanInfo(text);
+    if (info.tgl) tgl = info.tgl;
     if (!text.trim()) return setU('su', { items: null, msg: 'Tempel daftar WBP yang keluar dulu.', kind: 'warn' });
     var lap = S.lap.filter(function (l) { return l.tgl === tgl; })[0], kats = KAT_LUAR.slice();
     ((lap && lap.luar) || []).forEach(function (g) { if (kats.indexOf(g.kat) < 0) kats.push(g.kat); });
@@ -2062,7 +2081,7 @@ function bukaLepas(e) {
     } catch (e) { return setU('su', { items: null, msg: errText(e), kind: 'bad' }); }
     list = list.filter(function (x) { return x.nama; }).map(function (x) { var mm = cocokNama(x.nama); return { on: true, nama: x.nama, kat: x.kat, alasan: x.alasan, noreg: mm ? mm.k : '' }; });
     if (!list.length) return setU('su', { items: null, msg: 'Tidak ada nama yang terbaca. Periksa teksnya.', kind: 'warn' });
-    setU('su', { items: list, tgl: tgl, busy: false, msg: list.length + ' orang terbaca. Cek kategori dan keterangannya, lalu tambahkan ke laporan.', kind: 'ok' });
+    setU('su', { items: list, tgl: tgl, jam: info.jam, busy: false, msg: list.length + ' orang terbaca. Cek kategori dan keterangannya, lalu tambahkan ke laporan.', kind: 'ok' });
   }
   async function saveSusulan() {
     var st = ui.up.su, tgl = st.tgl || susulanTgl(), todo = st.items.filter(function (i) { return i.on && i.nama.trim(); });
@@ -2088,7 +2107,7 @@ function bukaLepas(e) {
         doc.diluar = (doc.diluar || 0) + 1; doc.dalam = (doc.dalam || 0) - 1; n++; added.push(nama);
       });
       if (!n) { ui.up.su = Object.assign({}, st, { busy: false, msg: 'Semua nama sudah ada di laporan ' + P.tglID(tgl) + '.', kind: 'warn' }); return drawUp(); }
-      var jam = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false }).replace(':', '.');
+      var jam = st.jam || new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false }).replace(':', '.');
       doc.teks = (String(doc.teks || '') + '\n\n[Susulan ' + jam + '] ' + added.join(', ')).slice(0, 6000);
       await S.db.doc('laporan/' + tgl).set(doc);
       ui.up.su = { tgl: tgl, msg: n + ' orang ditambahkan ke laporan ' + P.tglID(tgl) + (dup ? ' (' + dup + ' sudah ada, dilewati)' : '') + '. Di dalam ' + doc.dalam + ', di luar ' + doc.diluar + '.', kind: 'ok' };
