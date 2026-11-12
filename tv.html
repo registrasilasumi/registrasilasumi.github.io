@@ -413,7 +413,7 @@ body.paused .paused-badge{display:inline-block}
     <div class="stat"><span id="asof"></span><span id="net"></span><span class="pill warn paused-badge">Dijeda</span></div>
   </footer>
 </div>
-<div id="masuk" aria-live="assertive"><div class="mk-konf" id="mkkonf"></div><div class="mk-card"><div class="mk-antri" id="mkq"></div><span class="mk-badge"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg><span id="mkjenis">Tamu</span></span><div class="mk-nama" id="mknama"></div><div class="mk-ket" id="mkket"></div><div class="mk-sudah">SUDAH MASUK</div><div class="mk-jalan"><div class="mk-org"><svg viewBox="0 0 60 60"><g class="bd"><circle cx="30" cy="9" r="6.5" fill="#E8B48C"/><path d="M23.5 8a6.5 6.5 0 0 1 13 0c-3-2-9-2-13 0z" fill="#3b2f2a"/><rect x="23" y="16" width="14" height="19" rx="5" fill="#2F6FB3"/><g class="a1"><rect x="19.5" y="17" width="5" height="16" rx="2.5" fill="#E8B48C"/></g><g class="a2"><rect x="35.5" y="17" width="5" height="16" rx="2.5" fill="#E8B48C"/></g></g><g class="l1"><rect x="24" y="34" width="6" height="20" rx="3" fill="#46576A"/><rect x="23" y="52" width="9" height="4" rx="2" fill="#222"/></g><g class="l2"><rect x="30" y="34" width="6" height="20" rx="3" fill="#33414f"/><rect x="29" y="52" width="9" height="4" rx="2" fill="#222"/></g></svg></div></div></div></div>
+<div id="masuk" aria-live="assertive"><div class="mk-konf" id="mkkonf"></div><div class="mk-card"><div class="mk-antri" id="mkq"></div><span class="mk-badge"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg><span id="mkjenis">Tamu</span></span><div class="mk-nama" id="mknama"></div><div class="mk-ket" id="mkket"></div><div class="mk-sudah">SUDAH DI P2U</div><div class="mk-jalan"><div class="mk-org"><svg viewBox="0 0 60 60"><g class="bd"><circle cx="30" cy="9" r="6.5" fill="#E8B48C"/><path d="M23.5 8a6.5 6.5 0 0 1 13 0c-3-2-9-2-13 0z" fill="#3b2f2a"/><rect x="23" y="16" width="14" height="19" rx="5" fill="#2F6FB3"/><g class="a1"><rect x="19.5" y="17" width="5" height="16" rx="2.5" fill="#E8B48C"/></g><g class="a2"><rect x="35.5" y="17" width="5" height="16" rx="2.5" fill="#E8B48C"/></g></g><g class="l1"><rect x="24" y="34" width="6" height="20" rx="3" fill="#46576A"/><rect x="23" y="52" width="9" height="4" rx="2" fill="#222"/></g><g class="l2"><rect x="30" y="34" width="6" height="20" rx="3" fill="#33414f"/><rect x="29" y="52" width="9" height="4" rx="2" fill="#222"/></g></svg></div></div></div></div>
 <button id="suara" type="button" title="Klik sekali agar suara pemberitahuan aktif">Suara belum aktif (klik)</button>
 <div class="hint" id="hint">Klik layar sekali = suara aktif · F = layar penuh · Spasi = jeda · ← → = pindah slide · T = tema</div>
 <div id="gate"><form id="gf"><h1>Mode TV</h1><p>Masukkan kode akses (kode lihat) sekali saja. Kode diingat di browser ini.</p><input id="gk" type="password" autocomplete="off" placeholder="Kode akses"><div class="e" id="ge"></div><button>Tampilkan</button></form></div>
@@ -499,7 +499,7 @@ body.paused .paused-badge{display:inline-block}
     document.getElementById('mkket').textContent = a.ket;
     document.getElementById('mkq').textContent = antri.length ? 'Antrean: +' + antri.length : '';
     konfeti(); document.getElementById('masuk').classList.add('on'); bunyi();
-    ucapkan(a.nama + ' sudah masuk.');
+    ucapkan('Tamu dari ' + a.nama + ' sudah di P2U.');
     setTimeout(tutupNotif, 7500);
   }
   function cekMasuk(docs) {
@@ -511,8 +511,10 @@ body.paused .paused-badge{display:inline-block}
       var key = d.coll + '/' + d.id; now[key] = !!e.done;
       if (seenDone && e.done && !seenDone[key] && e.tgl === T) {
         var jenis = tipe === 'sidang' ? 'Sidang' : tipe === 'periksa' ? 'Pemeriksaan' : (e.arah === 'masuk' ? 'Mutasi masuk' : 'Mutasi keluar');
-        var ket = tipe === 'mutasi' ? ((e.asal && e.tujuan) ? e.asal + ' → ' + e.tujuan : (e.tujuan || e.asal || '')) : (e.instansi || '');
-        baru.push({ jenis: jenis, nama: titleCase(e.nama || ''), ket: ket, at: e.done_at || '' });
+        // yang datang adalah tamunya (instansi): untuk mutasi masuk = lapas asal, mutasi keluar = lapas tujuan
+        var tamu = tipe === 'mutasi' ? (e.arah === 'masuk' ? (e.asal || e.tujuan || '') : (e.tujuan || e.asal || '')) : (e.instansi || '');
+        var wbp = titleCase(e.nama || '');
+        baru.push({ jenis: jenis, nama: tamu || wbp, ket: tamu && wbp ? 'Untuk: ' + wbp : '', at: e.done_at || '' });
       }
     });
     seenDone = now;
@@ -522,7 +524,7 @@ body.paused .paused-badge{display:inline-block}
   window.addEventListener('pointerdown', aktifkanSuara); window.addEventListener('keydown', aktifkanSuara);
   document.getElementById('suara').addEventListener('click', aktifkanSuara);
   try { window.speechSynthesis.onvoiceschanged = pilihSuara; pilihSuara(); } catch (e) {}
-  window.__ujiMasuk = function (n) { suaraOn = suaraOn; antri.push({ jenis: 'Sidang', nama: n || 'Contoh Nama', ket: 'Pengadilan Negeri Bandung', at: '' }); nextNotif(); };
+  window.__ujiMasuk = function (n) { suaraOn = suaraOn; antri.push({ jenis: 'Sidang', nama: n || 'Pengadilan Negeri Bandung', ket: 'Untuk: Contoh Nama', at: '' }); nextNotif(); };
 
   /* ---------- data ---------- */
   function rpc(op) {
