@@ -502,7 +502,7 @@ body.paused .paused-badge{display:inline-block}
         var jenis = tipe === 'tagih' ? 'Penagihan UP' : tipe === 'sidang' ? 'Sidang' : tipe === 'periksa' ? 'Pemeriksaan' : (e.arah === 'masuk' ? 'Mutasi masuk' : 'Mutasi keluar');
         // yang datang adalah tamunya (instansi): untuk mutasi masuk = lapas asal, mutasi keluar = lapas tujuan
         var tamu = tipe === 'tagih' ? (e.instansi || '') : tipe === 'mutasi' ? (e.arah === 'masuk' ? (e.asal || e.tujuan || '') : (e.tujuan || e.asal || '')) : (e.instansi || '');
-        var wbp = titleCase(e.nama || ''); if (tipe === 'tagih') wbp = [e.petugas ? 'Menemui ' + e.petugas : '', wbp].filter(Boolean).join(' · ');
+        var wbp = titleCase(e.nama || ''); if (tipe === 'tagih') wbp = [wbp ? 'Untuk: ' + wbp : '', e.petugas ? 'Menemui ' + e.petugas : ''].filter(Boolean).join(' · ');
         baru.push({ jenis: jenis, nama: tamu || wbp, ket: tamu && wbp ? (tipe === 'tagih' ? wbp : 'Untuk: ' + wbp) : '', at: e.done_at || '' });
       }
     });
