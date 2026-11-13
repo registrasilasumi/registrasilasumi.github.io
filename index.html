@@ -930,7 +930,7 @@ window.API_URL = 'https://script.google.com/macros/s/AKfycbz2Ji6knZXXHTr5a3bG1If
       var e = g.e, d = P.dayDiff(T, e.tgl), tgl = P.tglID(e.tgl).split(' ');
       var line;
       if (e.tipe === 'bebas') line = [h('span', { style: e.done ? 'text-decoration:line-through;color:var(--ink3)' : null }, g.names[0]), ' ', badge(e.ket || 'Bebas', ketKind(e.ket)), h('span', { class: 'faint', text: ' ' + when(e.tgl) })];
-      else line = [h('div', null, (e.tipe === 'sidang' ? 'Sidang' : 'Pemeriksaan') + (e.mode && e.mode !== 'tidak disebut' ? ' ' + e.mode : '') + (e.jam ? ', ' + e.jam.replace(':', '.') + ' WIB' : '') + (e.instansi ? ', ' + e.instansi : '')), h('div', { class: 'muted' }, g.evs.map(function (x, i) { return [i ? ', ' : '', h('span', { style: x.done ? 'text-decoration:line-through;color:var(--ink3)' : null }, short(who(x).nama))]; }))];
+      else line = [h('div', null, (e.tipe === 'sidang' ? 'Sidang' : e.tipe === 'tagih' ? 'Penagihan UP' : 'Pemeriksaan') + (e.mode && e.mode !== 'tidak disebut' ? ' ' + e.mode : '') + (e.jam ? ', ' + e.jam.replace(':', '.') + ' WIB' : '') + (e.instansi ? ', ' + e.instansi : '')), h('div', { class: 'muted' }, g.evs.map(function (x, i) { return [i ? ', ' : '', h('span', { style: x.done ? 'text-decoration:line-through;color:var(--ink3)' : null }, short(who(x).nama || (x.petugas ? 'Menemui ' + x.petugas : '')))]; }))];
       add(agCard, h('div', { class: 'ag' }, h('div', { class: 'd' }, h('b', { text: tgl[0] }), tgl[1]), h('div', null, line)));
     });
     // di luar
@@ -1369,6 +1369,7 @@ function bukaLepas(e) {
     var T = today(), root = h('div');
     var D = T, all = [];
     S.events.forEach(function (e) {
+      if (e.tipe === 'tagih') { all.push({ k: 'tagih', tgl: e.tgl || '', jam: e.jam || '', nama: nm(e.nama) || (e.petugas ? 'Menemui ' + e.petugas : '–'), ket: (e.instansi || '') + (e.nama && e.petugas ? ' · menemui ' + e.petugas : ''), done: !!e.done, ref: 'events/' + e.id }); return; }
       if (e.tipe !== 'sidang' && e.tipe !== 'periksa') return;
       all.push({ k: e.tipe, tgl: e.tgl || '', jam: e.jam || '', nama: nm(who(e).nama), ket: e.instansi || '', mode: e.mode, done: !!e.done, ref: 'events/' + e.id });
     });
@@ -1381,10 +1382,10 @@ function bukaLepas(e) {
     function pill(t, k) { return h('button', { class: 'pill', 'aria-pressed': f === k ? 'true' : 'false', onclick: function () { ui.agj = k; render(); } }, t); }
     var cnt = function (k) { return hari.filter(function (a) { return !k || a.k === k; }).length; };
     var tampil = hari.filter(function (a) { return !f || a.k === f; }).sort(function (a, b) { return (a.jam || '99').localeCompare(b.jam || '99'); });
-    add(root, h('div', { class: 'card' }, h('div', { class: 'bar2' }, pill('Semua ' + cnt(''), ''), pill('Sidang ' + cnt('sidang'), 'sidang'), pill('Pemeriksaan ' + cnt('periksa'), 'periksa'), pill('Mutasi ' + cnt('mutasi'), 'mutasi'))));
+    add(root, h('div', { class: 'card' }, h('div', { class: 'bar2' }, pill('Semua ' + cnt(''), ''), pill('Sidang ' + cnt('sidang'), 'sidang'), pill('Pemeriksaan ' + cnt('periksa'), 'periksa'), pill('Mutasi ' + cnt('mutasi'), 'mutasi'), pill('Penagihan UP ' + cnt('tagih'), 'tagih'))));
     var cols = [
       { h: 'Jam', c: 'mono', f: function (a) { return a.jam ? a.jam.replace(':', '.') : ''; } },
-      { h: 'Jenis', f: function (a) { return a.k === 'mutasi' ? badge(a.arah === 'masuk' ? 'Mutasi masuk' : 'Mutasi keluar', a.arah === 'masuk' ? 'blue' : 'gold') : badge(a.k === 'sidang' ? 'Sidang' : 'Pemeriksaan', a.k === 'sidang' ? 'violet' : 'blue'); } },
+      { h: 'Jenis', f: function (a) { return a.k === 'tagih' ? badge('Penagihan UP', 'ok') : a.k === 'mutasi' ? badge(a.arah === 'masuk' ? 'Mutasi masuk' : 'Mutasi keluar', a.arah === 'masuk' ? 'blue' : 'gold') : badge(a.k === 'sidang' ? 'Sidang' : 'Pemeriksaan', a.k === 'sidang' ? 'violet' : 'blue'); } },
       { h: 'Nama', f: function (a) { return a.nama; } },
       { h: 'Tujuan / instansi', f: function (a) { return a.ket + (a.mode === 'online' ? ' (online)' : ''); } },
       { h: 'Selesai', f: function (a) {
@@ -1394,7 +1395,7 @@ function bukaLepas(e) {
         return ck;
       } }
     ];
-    add(root, h('div', { class: 'card' }, tampil.length ? table(cols, tampil, function (a) { return a.done ? 'done' : ''; }) : empty('Tidak ada agenda hari ini', 'Sidang, pemeriksaan, dan mutasi hari ini akan tampil di sini.')));
+    add(root, h('div', { class: 'card' }, tampil.length ? table(cols, tampil, function (a) { return a.done ? 'done' : ''; }) : empty('Tidak ada agenda hari ini', 'Sidang, pemeriksaan, mutasi, dan penagihan UP hari ini akan tampil di sini.')));
     return root;
   }
 
@@ -1677,7 +1678,7 @@ function bukaLepas(e) {
         f('Asal instansi', r.a), f('Tanggal masuk', P.tglID(r.m)), f('Lama pidana', r.p), f('Residivis ke', r.rc),
         f('Tanggal ditahan', P.tglID(r.h)), f('Denda', r.dn ? 'Rp. ' + rupiah(r.dn) : ''), f('Subsider denda', r.ds), f('Uang pengganti (UP)', r.up ? 'Rp. ' + rupiah(r.up) : ''), f('Subsider UP', r.us),
         f('1/3 masa pidana', P.tglID(r.t1)), f('1/2 masa pidana', P.tglID(r.t2)), f('2/3 masa pidana', P.tglID(r.t3)), f('Ekspirasi', P.tglID(r.e))),
-        evs.length ? h('div', { class: 'note', text: 'Catatan: ' + evs.map(function (e) { return (e.tipe === 'bebas' ? (e.ket || 'Bebas') : e.tipe) + ' ' + P.tglID(e.tgl); }).join('; ') }) : null,
+        evs.length ? h('div', { class: 'note', text: 'Catatan: ' + evs.map(function (e) { return (e.tipe === 'bebas' ? (e.ket || 'Bebas') : e.tipe === 'tagih' ? 'penagihan UP' : e.tipe) + ' ' + P.tglID(e.tgl); }).join('; ') }) : null,
         (function () {
           var pr = evs.filter(function (e) { return e.tipe === 'periksa'; }).sort(function (a, b) { return sortEv(b, a); });
           if (!pr.length) return null;
@@ -1883,7 +1884,7 @@ function bukaLepas(e) {
     add(root, h('div', { class: 'card' },
       step(1, 'Excel dari SDP', 'Menimpa daftar penghuni. Penghuni baru dan yang sudah tidak ada akan dilaporkan sebelum disimpan.', stExcel()),
       step(2, 'Laporan harian', 'Tempel teks laporan dari WA. Angka, rincian, dan nama yang di luar terbaca otomatis.', h('div', null, stLaporan(), h('div', { style: 'border-top:1px solid var(--line);margin-top:16px;padding-top:12px' }, h('b', { text: 'Susulan: WBP keluar setelah laporan pagi' }), h('p', { text: 'Tempel daftar WBP yang keluar setelah laporan harian pagi dibuat (sidang, berobat, bebas, dipindah, dan lainnya). Jumlah di dalam dan di luar pada laporan hari itu ikut diperbarui. Hasilnya Anda cek dulu.' }), stSusulan()))),
-      step(3, 'Surat panggilan dan mutasi', 'PDF atau foto. Sidang, pemeriksaan, atau rencana mutasi (pemindahan masuk atau keluar) ditentukan dari isi surat. Dibaca oleh Claude, hasilnya Anda cek dulu.', stSurat()),
+      step(3, 'Surat panggilan, mutasi, dan penagihan UP', 'PDF atau foto. Sidang, pemeriksaan, atau rencana mutasi (pemindahan masuk atau keluar) ditentukan dari isi surat. Dibaca oleh Claude, hasilnya Anda cek dulu.', h('div', null, stSurat(), h('div', { style: 'border-top:1px solid var(--line);margin-top:16px;padding-top:12px' }, h('b', { text: 'Penagihan UP dari instansi (Kejaksaan, KPK, dan lainnya)' }), h('p', { text: 'Tempel chat koordinasi dari instansi. Jam, tanggal, dan petugas yang ditemui terbaca otomatis. Instansi dan nama WBP yang ditagih Anda lengkapi. Jadwalnya masuk ke Agenda sehingga P2U bisa mencentang saat tamu tiba.' }), stTagih()))),
       step(4, 'Foto papan bebas', 'Foto papan Daftar Narapidana Bebas. Tanggal bebas hanya diambil dari foto ini.', stBebas()),
       step(5, 'Laporan atensi (WBP baru)', 'Tempel teks Laporan Atensi Pimpinan tentang penerimaan terpidana. Boleh beberapa laporan sekaligus. Hasilnya Anda cek dulu sebelum disimpan.', stMasuk())));
     return root;
@@ -1998,6 +1999,79 @@ function bukaLepas(e) {
   /* Susulan: WBP yang keluar setelah laporan harian pagi */
   var KAT_LUAR = ['Pembinaan', 'Asimilasi', 'Sakit', 'Bon', 'Sidang PK', 'ILB', 'Alasan lain'];
   function susulanTgl() { var st = ui.up.su || {}; return st.tgl || (S.lap[0] && S.lap[0].tgl) || today(); }
+
+  /* Penagihan UP (uang pengganti) dari instansi: dari chat koordinasi */
+  var INSTANSI_UP = ['Kejaksaan Negeri Bandung', 'Kejaksaan Tinggi Jawa Barat', 'Kejaksaan Agung', 'KPK', 'Kejaksaan Negeri Jakarta Selatan', 'Kejaksaan Negeri Jakarta Pusat'];
+  function tagihLokal(text) {
+    var t = String(text || '').replace(/\r/g, ''), flat = t.replace(/\s+/g, ' ').trim(), o = { on: true, instansi: '', tgl: today(), jam: '', petugas: '', nama: '', noreg: '', ket: 'Penagihan UP' };
+    var d = new Date();
+    if (/\bbesok\b/i.test(flat)) { d.setDate(d.getDate() + 1); o.tgl = isoLokal(d); }
+    else if (/\blusa\b/i.test(flat)) { d.setDate(d.getDate() + 2); o.tgl = isoLokal(d); }
+    var dm = flat.match(/(\d{1,2})\s+(Januari|Februari|Maret|April|Mei|Juni|Juli|Agustus|September|Oktober|November|Desember)\s+(\d{4})/i);
+    if (dm) { var mi = P.BULAN.map(function (x) { return String(x).toLowerCase(); }).indexOf(dm[2].toLowerCase()); if (mi >= 0) o.tgl = dm[3] + '-' + ('0' + (mi + 1)).slice(-2) + '-' + ('0' + dm[1]).slice(-2); }
+    var jm = flat.match(/(?:jam|pukul|pkl)\.?\s*(\d{1,2})(?:\s*[.:]\s*(\d{2}))?/i);
+    if (jm && +jm[1] < 24) o.jam = ('0' + jm[1]).slice(-2) + ':' + (jm[2] || '00');
+    var pm = flat.match(/(?:ketemu|bertemu|menemui|temui|ke)\s+((?:(?:pak|bapak|bu|ibu|mas|mbak)\s+[A-Za-z]+(?:\s*(?:,|dan|&)\s*)?)+)/i);
+    if (pm) o.petugas = pm[1].replace(/\s*(?:,|dan|&)\s*$/i, '').split(/\s*(?:,|dan|&)\s*/i).map(function (x) { return x.trim().replace(/\b([a-z])/g, function (m) { return m.toUpperCase(); }); }).filter(Boolean).join(', ');
+    var im = flat.match(/\b(kpk|kejaksaan\s+tinggi[\w\s]*?|kejati[\w\s]*?|kejaksaan\s+negeri\s+[A-Za-z]+(?:\s+[A-Za-z]+)?|kejari\s+[A-Za-z]+|kejaksaan\s+agung|kejagung)\b/i);
+    if (im) { var x = im[1].trim(); o.instansi = /kpk/i.test(x) ? 'KPK' : /kejagung|agung/i.test(x) ? 'Kejaksaan Agung' : x.replace(/^kejari/i, 'Kejaksaan Negeri').replace(/\b([a-z])/g, function (m) { return m.toUpperCase(); }); }
+    var wm = flat.match(/\b(?:an\.?|atas nama|a\/n)\s+([A-Za-z][A-Za-z .'-]{3,40}?)(?=\s+(?:untuk|buat|jam|pukul|pagi|siang|sore)\b|[,.;]|$)/i);
+    if (wm) { o.nama = wm[1].trim(); var mm = cocokNama(o.nama); if (mm) o.noreg = mm.k; }
+    return o;
+  }
+  function isoLokal(d) { return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+  function bacaTagih() {
+    var st = ui.up.tg || {}, o = tagihLokal(st.paste || '');
+    if (!(st.paste || '').trim()) return setU('tg', { msg: 'Tempel chat koordinasinya dulu, atau pilih Isi manual.', kind: 'warn' });
+    var kurang = [!o.instansi ? 'instansi' : '', !o.jam ? 'jam' : '', !o.petugas ? 'petugas yang ditemui' : ''].filter(Boolean);
+    setU('tg', { items: [o], msg: 'Chat terbaca.' + (kurang.length ? ' Lengkapi: ' + kurang.join(', ') + '.' : ' Cek lalu simpan.'), kind: kurang.length ? 'warn' : 'ok' });
+  }
+  function stTagih() {
+    var st = ui.up.tg || {}, box = h('div');
+    var ta = h('textarea', { placeholder: 'Tempel chat koordinasi dari instansi di sini', 'aria-label': 'Chat koordinasi penagihan UP', disabled: !wr(), value: st.paste || '', style: 'min-height:90px' });
+    ta.addEventListener('input', function () { ui.up.tg = Object.assign(ui.up.tg || {}, { paste: ta.value }); });
+    add(box, ta, h('div', { class: 'bar2', style: 'margin-top:8px' },
+      h('button', { class: 'btn', text: 'Baca chat', disabled: !wr(), onclick: bacaTagih }),
+      h('button', { class: 'btn', text: 'Isi manual', disabled: !wr(), onclick: function () { setU('tg', { items: [{ on: true, instansi: '', tgl: today(), jam: '', petugas: '', nama: '', noreg: '', ket: 'Penagihan UP' }], msg: 'Isi data penagihan, lalu simpan.', kind: '' }); } })));
+    add(box, status(st));
+    if (st.items && st.items.length) {
+      var dl = h('datalist', { id: 'dl-instansi-up' }, INSTANSI_UP.map(function (x) { return h('option', { value: x }); }));
+      var tb = h('tbody');
+      st.items.forEach(function (it) {
+        var ck = h('input', { type: 'checkbox', checked: it.on, 'aria-label': 'Simpan penagihan', onchange: function () { it.on = ck.checked; } });
+        var ins = h('input', { type: 'text', value: it.instansi, list: 'dl-instansi-up', style: 'width:210px', placeholder: 'Instansi', 'aria-label': 'Instansi', onchange: function () { it.instansi = ins.value; } });
+        var tg = h('input', { type: 'date', value: it.tgl, 'aria-label': 'Tanggal', onchange: function () { it.tgl = tg.value; } });
+        var jm = h('input', { type: 'text', value: it.jam, style: 'width:64px', placeholder: 'HH:MM', 'aria-label': 'Jam', onchange: function () { it.jam = jm.value; } });
+        var pt = h('input', { type: 'text', value: it.petugas, style: 'width:180px', placeholder: 'Pak A, Pak B', 'aria-label': 'Petugas yang ditemui', onchange: function () { it.petugas = pt.value; } });
+        var info = h('div', { class: 'faint' });
+        function cek() { clear(info); var m = cocokNama(it.nama); it.noreg = m ? m.k : ''; if (it.nama) info.append(m ? h('span', { text: reg(m.k) + (m.up ? ' · UP Rp. ' + rupiah(m.up) : '') }) : badge('Belum cocok dengan SDP', 'warn')); }
+        var wb = h('input', { type: 'text', value: it.nama, style: 'width:210px', placeholder: 'Nama WBP (boleh kosong)', 'aria-label': 'Nama WBP yang ditagih', onchange: function () { it.nama = wb.value; cek(); } });
+        cek();
+        tb.append(h('tr', null, h('td', null, ck), h('td', null, ins), h('td', null, tg), h('td', null, jm), h('td', null, pt), h('td', null, wb, info)));
+      });
+      add(box, dl, h('div', { class: 'tw', style: 'margin-top:8px' }, h('table', null, h('thead', null, h('tr', null, ['', 'Instansi', 'Tanggal', 'Jam', 'Menemui', 'WBP yang ditagih'].map(function (t) { return h('th', { text: t }); }))), tb)));
+      add(box, h('div', { style: 'margin-top:8px' }, h('button', { class: 'btn pri', disabled: st.busy || !wr(), text: st.busy ? 'Menyimpan…' : 'Simpan penagihan UP', onclick: saveTagih })));
+    }
+    return box;
+  }
+  async function saveTagih() {
+    var st = ui.up.tg, todo = st.items.filter(function (i) { return i.on; }), n = 0;
+    if (todo.some(function (i) { return !i.tgl; })) return setU('tg', { msg: 'Ada yang belum bertanggal.', kind: 'warn' });
+    if (todo.some(function (i) { return !String(i.instansi || '').trim(); })) return setU('tg', { msg: 'Isi dulu nama instansinya.', kind: 'warn' });
+    setU('tg', { busy: true });
+    try {
+      for (var k = 0; k < todo.length; k++) {
+        var i = todo[k], m = i.noreg ? P.matchReg(i.noreg, S.master) : null;
+        var jam = String(i.jam || '').replace('.', ':').replace(/^(\d):/, '0$1:');
+        var eid = evId('tagih', i.noreg, i.nama || i.instansi, i.tgl + (jam ? '-' + jam.replace(':', '') : '')), old = S.events.filter(function (x) { return x.id === eid; })[0] || {};
+        await S.db.doc('events/' + eid).set({ done: old.done || false, done_at: old.done_at || '', tipe: 'tagih', tgl: i.tgl, jam: jam, instansi: String(i.instansi).trim(), petugas: String(i.petugas || '').trim(), nama: m ? nm(m.n) : nm(i.nama), noreg: i.noreg || '', ket: 'Penagihan UP', mode: 'tatap muka', sumber: 'chat' });
+        n++;
+      }
+      ui.up.tg = { msg: n + ' penagihan UP tersimpan. Tampil di Agenda pada tanggalnya.', kind: 'ok' };
+    } catch (e) { ui.up.tg = Object.assign({}, st, { busy: false, msg: 'Gagal menyimpan: ' + errText(e), kind: 'bad' }); }
+    drawUp();
+  }
+
   function stSusulan() {
     var st = ui.up.su || {}, box = h('div'), tgl = susulanTgl();
     var tg = h('input', { type: 'date', value: tgl, 'aria-label': 'Tanggal laporan harian', onchange: function () { ui.up.su = Object.assign(ui.up.su || {}, { tgl: tg.value }); } });

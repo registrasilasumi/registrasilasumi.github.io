@@ -496,14 +496,14 @@ body.paused .paused-badge{display:inline-block}
     var T = today();
     (docs || []).forEach(function (d) {
       var e = d.data || {}, tipe = d.coll === 'events' ? e.tipe : (d.coll === 'mutasi' ? 'mutasi' : '');
-      if (tipe !== 'sidang' && tipe !== 'periksa' && tipe !== 'mutasi') return;
+      if (tipe !== 'sidang' && tipe !== 'periksa' && tipe !== 'mutasi' && tipe !== 'tagih') return;
       var key = d.coll + '/' + d.id; now[key] = !!e.done;
       if (seenDone && e.done && !seenDone[key] && e.tgl === T) {
-        var jenis = tipe === 'sidang' ? 'Sidang' : tipe === 'periksa' ? 'Pemeriksaan' : (e.arah === 'masuk' ? 'Mutasi masuk' : 'Mutasi keluar');
+        var jenis = tipe === 'tagih' ? 'Penagihan UP' : tipe === 'sidang' ? 'Sidang' : tipe === 'periksa' ? 'Pemeriksaan' : (e.arah === 'masuk' ? 'Mutasi masuk' : 'Mutasi keluar');
         // yang datang adalah tamunya (instansi): untuk mutasi masuk = lapas asal, mutasi keluar = lapas tujuan
-        var tamu = tipe === 'mutasi' ? (e.arah === 'masuk' ? (e.asal || e.tujuan || '') : (e.tujuan || e.asal || '')) : (e.instansi || '');
-        var wbp = titleCase(e.nama || '');
-        baru.push({ jenis: jenis, nama: tamu || wbp, ket: tamu && wbp ? 'Untuk: ' + wbp : '', at: e.done_at || '' });
+        var tamu = tipe === 'tagih' ? (e.instansi || '') : tipe === 'mutasi' ? (e.arah === 'masuk' ? (e.asal || e.tujuan || '') : (e.tujuan || e.asal || '')) : (e.instansi || '');
+        var wbp = titleCase(e.nama || ''); if (tipe === 'tagih') wbp = [e.petugas ? 'Menemui ' + e.petugas : '', wbp].filter(Boolean).join(' · ');
+        baru.push({ jenis: jenis, nama: tamu || wbp, ket: tamu && wbp ? (tipe === 'tagih' ? wbp : 'Untuk: ' + wbp) : '', at: e.done_at || '' });
       }
     });
     seenDone = now;
