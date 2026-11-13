@@ -930,7 +930,7 @@ window.API_URL = 'https://script.google.com/macros/s/AKfycbz2Ji6knZXXHTr5a3bG1If
       var e = g.e, d = P.dayDiff(T, e.tgl), tgl = P.tglID(e.tgl).split(' ');
       var line;
       if (e.tipe === 'bebas') line = [h('span', { style: e.done ? 'text-decoration:line-through;color:var(--ink3)' : null }, g.names[0]), ' ', badge(e.ket || 'Bebas', ketKind(e.ket)), h('span', { class: 'faint', text: ' ' + when(e.tgl) })];
-      else line = [h('div', null, (e.tipe === 'sidang' ? 'Sidang' : e.tipe === 'tagih' ? 'Penagihan UP' : 'Pemeriksaan') + (e.mode && e.mode !== 'tidak disebut' ? ' ' + e.mode : '') + (e.jam ? ', ' + e.jam.replace(':', '.') + ' WIB' : '') + (e.instansi ? ', ' + e.instansi : '')), h('div', { class: 'muted' }, g.evs.map(function (x, i) { return [i ? ', ' : '', h('span', { style: x.done ? 'text-decoration:line-through;color:var(--ink3)' : null }, short(who(x).nama || (x.petugas ? 'Menemui ' + x.petugas : '')))]; }))];
+      else line = [h('div', null, (e.tipe === 'sidang' ? 'Sidang' : e.tipe === 'tagih' ? 'Penagihan UP' : 'Pemeriksaan') + (e.mode && e.mode !== 'tidak disebut' ? ' ' + e.mode : '') + (e.jam ? ', ' + e.jam.replace(':', '.') + ' WIB' : '') + (e.instansi ? ', ' + e.instansi : '')), h('div', { class: 'muted' }, g.evs.map(function (x, i) { return [i ? ', ' : '', h('span', { style: x.done ? 'text-decoration:line-through;color:var(--ink3)' : null }, short(who(x).nama))]; }))];
       add(agCard, h('div', { class: 'ag' }, h('div', { class: 'd' }, h('b', { text: tgl[0] }), tgl[1]), h('div', null, line)));
     });
     // di luar
@@ -1369,7 +1369,7 @@ function bukaLepas(e) {
     var T = today(), root = h('div');
     var D = T, all = [];
     S.events.forEach(function (e) {
-      if (e.tipe === 'tagih') { all.push({ k: 'tagih', tgl: e.tgl || '', jam: e.jam || '', nama: nm(e.nama) || (e.petugas ? 'Menemui ' + e.petugas : '–'), ket: (e.instansi || '') + (e.nama && e.petugas ? ' · menemui ' + e.petugas : ''), done: !!e.done, ref: 'events/' + e.id }); return; }
+      if (e.tipe === 'tagih') { all.push({ k: 'tagih', tgl: e.tgl || '', jam: e.jam || '', nama: nm(who(e).nama) || '–', ket: (e.instansi || '') + (e.petugas ? ' · menemui ' + e.petugas : ''), done: !!e.done, ref: 'events/' + e.id }); return; }
       if (e.tipe !== 'sidang' && e.tipe !== 'periksa') return;
       all.push({ k: e.tipe, tgl: e.tgl || '', jam: e.jam || '', nama: nm(who(e).nama), ket: e.instansi || '', mode: e.mode, done: !!e.done, ref: 'events/' + e.id });
     });
@@ -1884,7 +1884,7 @@ function bukaLepas(e) {
     add(root, h('div', { class: 'card' },
       step(1, 'Excel dari SDP', 'Menimpa daftar penghuni. Penghuni baru dan yang sudah tidak ada akan dilaporkan sebelum disimpan.', stExcel()),
       step(2, 'Laporan harian', 'Tempel teks laporan dari WA. Angka, rincian, dan nama yang di luar terbaca otomatis.', h('div', null, stLaporan(), h('div', { style: 'border-top:1px solid var(--line);margin-top:16px;padding-top:12px' }, h('b', { text: 'Susulan: WBP keluar setelah laporan pagi' }), h('p', { text: 'Tempel daftar WBP yang keluar setelah laporan harian pagi dibuat (sidang, berobat, bebas, dipindah, dan lainnya). Jumlah di dalam dan di luar pada laporan hari itu ikut diperbarui. Hasilnya Anda cek dulu.' }), stSusulan()))),
-      step(3, 'Surat panggilan, mutasi, dan penagihan UP', 'PDF atau foto. Sidang, pemeriksaan, atau rencana mutasi (pemindahan masuk atau keluar) ditentukan dari isi surat. Dibaca oleh Claude, hasilnya Anda cek dulu.', h('div', null, stSurat(), h('div', { style: 'border-top:1px solid var(--line);margin-top:16px;padding-top:12px' }, h('b', { text: 'Penagihan UP dari instansi (Kejaksaan, KPK, dan lainnya)' }), h('p', { text: 'Tempel chat koordinasi dari instansi. Jam, tanggal, dan petugas yang ditemui terbaca otomatis. Instansi dan nama WBP yang ditagih Anda lengkapi. Jadwalnya masuk ke Agenda sehingga P2U bisa mencentang saat tamu tiba.' }), stTagih()))),
+      step(3, 'Surat panggilan, mutasi, dan penagihan UP', 'PDF atau foto. Sidang, pemeriksaan, atau rencana mutasi (pemindahan masuk atau keluar) ditentukan dari isi surat. Dibaca oleh Claude, hasilnya Anda cek dulu.', h('div', null, stSurat(), h('div', { style: 'border-top:1px solid var(--line);margin-top:16px;padding-top:12px' }, h('b', { text: 'Penagihan UP dari instansi (Kejaksaan, KPK, dan lainnya)' }), h('p', { text: 'Tempel chat koordinasi dari instansi. Jam, tanggal, dan petugas yang ditemui terbaca otomatis. Instansi dan nama WBP yang ditagih Anda lengkapi (nama dipilih dari daftar penghuni). Jadwalnya masuk ke Agenda sehingga P2U bisa mencentang saat tamu tiba.' }), stTagih()))),
       step(4, 'Foto papan bebas', 'Foto papan Daftar Narapidana Bebas. Tanggal bebas hanya diambil dari foto ini.', stBebas()),
       step(5, 'Laporan atensi (WBP baru)', 'Tempel teks Laporan Atensi Pimpinan tentang penerimaan terpidana. Boleh beberapa laporan sekaligus. Hasilnya Anda cek dulu sebelum disimpan.', stMasuk())));
     return root;
@@ -2023,7 +2023,7 @@ function bukaLepas(e) {
   function bacaTagih() {
     var st = ui.up.tg || {}, o = tagihLokal(st.paste || '');
     if (!(st.paste || '').trim()) return setU('tg', { msg: 'Tempel chat koordinasinya dulu, atau pilih Isi manual.', kind: 'warn' });
-    var kurang = [!o.instansi ? 'instansi' : '', !o.jam ? 'jam' : '', !o.petugas ? 'petugas yang ditemui' : ''].filter(Boolean);
+    var kurang = [!o.instansi ? 'instansi' : '', !o.nama ? 'nama WBP (pilih dari daftar penghuni)' : '', !o.jam ? 'jam' : ''].filter(Boolean);
     setU('tg', { items: [o], msg: 'Chat terbaca.' + (kurang.length ? ' Lengkapi: ' + kurang.join(', ') + '.' : ' Cek lalu simpan.'), kind: kurang.length ? 'warn' : 'ok' });
   }
   function stTagih() {
@@ -2044,13 +2044,25 @@ function bukaLepas(e) {
         var jm = h('input', { type: 'text', value: it.jam, style: 'width:64px', placeholder: 'HH:MM', 'aria-label': 'Jam', onchange: function () { it.jam = jm.value; } });
         var pt = h('input', { type: 'text', value: it.petugas, style: 'width:180px', placeholder: 'Pak A, Pak B', 'aria-label': 'Petugas yang ditemui', onchange: function () { it.petugas = pt.value; } });
         var info = h('div', { class: 'faint' });
-        function cek() { clear(info); var m = cocokNama(it.nama); it.noreg = m ? m.k : ''; if (it.nama) info.append(m ? h('span', { text: reg(m.k) + (m.up ? ' · UP Rp. ' + rupiah(m.up) : '') }) : badge('Belum cocok dengan SDP', 'warn')); }
-        var wb = h('input', { type: 'text', value: it.nama, style: 'width:210px', placeholder: 'Nama WBP (boleh kosong)', 'aria-label': 'Nama WBP yang ditagih', onchange: function () { it.nama = wb.value; cek(); } });
+        function cek() {
+          clear(info); var m = it.nama ? (P.matchReg(it.noreg, S.master) && P.matchReg(it.noreg, S.master).n === it.nama ? P.matchReg(it.noreg, S.master) : cocokNama(it.nama)) : null;
+          if (m) { it.noreg = m.k; it.nama = nm(m.n); wb.value = it.nama; info.append(h('span', { text: reg(m.k) + (m.up ? ' · UP Rp. ' + rupiah(m.up) : '') })); return; }
+          it.noreg = '';
+          if (!it.nama) return;
+          var cands = P.candidates(it.nama, S.master, 5);
+          if (!S.master.length) return info.append(badge('Data penghuni (Excel SDP) belum diunggah', 'warn'));
+          var sel = h('select', { 'aria-label': 'Pilih penghuni', onchange: function () { if (sel.value) { it.noreg = sel.value; var mm = P.matchReg(sel.value, S.master); it.nama = nm(mm.n); wb.value = it.nama; cek(); } } }, h('option', { value: '', text: cands.length ? 'Pilih dari daftar penghuni…' : 'Tidak ada yang mirip di daftar penghuni' }), cands.map(function (c) { return h('option', { value: c.row.k, text: nm(c.row.n).slice(0, 40) + ' · ' + reg(c.row.k) }); }));
+          info.append(badge('Belum cocok dengan daftar penghuni', 'warn'), sel);
+        }
+        var wb = h('input', { type: 'text', value: it.nama, list: 'dl-penghuni-up', style: 'width:230px', placeholder: 'Ketik nama WBP', 'aria-label': 'Nama WBP yang ditagih', onchange: function () { it.nama = wb.value; it.noreg = ''; cek(); } });
         cek();
         tb.append(h('tr', null, h('td', null, ck), h('td', null, ins), h('td', null, tg), h('td', null, jm), h('td', null, pt), h('td', null, wb, info)));
       });
-      add(box, dl, h('div', { class: 'tw', style: 'margin-top:8px' }, h('table', null, h('thead', null, h('tr', null, ['', 'Instansi', 'Tanggal', 'Jam', 'Menemui', 'WBP yang ditagih'].map(function (t) { return h('th', { text: t }); }))), tb)));
-      add(box, h('div', { style: 'margin-top:8px' }, h('button', { class: 'btn pri', disabled: st.busy || !wr(), text: st.busy ? 'Menyimpan…' : 'Simpan penagihan UP', onclick: saveTagih })));
+      var dlp = h('datalist', { id: 'dl-penghuni-up' }, S.master.map(function (x) { return h('option', { value: nm(x.n) }); }));
+      add(box, dl, dlp, h('div', { class: 'tw', style: 'margin-top:8px' }, h('table', null, h('thead', null, h('tr', null, ['', 'Instansi', 'Tanggal', 'Jam', 'Menemui', 'WBP yang ditagih'].map(function (t) { return h('th', { text: t }); }))), tb)));
+      add(box, h('div', { class: 'bar2', style: 'margin-top:8px' },
+        h('button', { class: 'btn', text: 'Tambah WBP lain', disabled: !wr(), onclick: function () { var a = st.items[st.items.length - 1]; st.items.push({ on: true, instansi: a.instansi, tgl: a.tgl, jam: a.jam, petugas: a.petugas, nama: '', noreg: '', ket: 'Penagihan UP' }); drawUp(); } }),
+        h('button', { class: 'btn pri', disabled: st.busy || !wr(), text: st.busy ? 'Menyimpan…' : 'Simpan penagihan UP', onclick: saveTagih })));
     }
     return box;
   }
@@ -2058,6 +2070,7 @@ function bukaLepas(e) {
     var st = ui.up.tg, todo = st.items.filter(function (i) { return i.on; }), n = 0;
     if (todo.some(function (i) { return !i.tgl; })) return setU('tg', { msg: 'Ada yang belum bertanggal.', kind: 'warn' });
     if (todo.some(function (i) { return !String(i.instansi || '').trim(); })) return setU('tg', { msg: 'Isi dulu nama instansinya.', kind: 'warn' });
+    if (todo.some(function (i) { return !String(i.nama || '').trim(); })) return setU('tg', { msg: 'Isi nama WBP yang ditagih, sesuai daftar penghuni.', kind: 'warn' });
     setU('tg', { busy: true });
     try {
       for (var k = 0; k < todo.length; k++) {
