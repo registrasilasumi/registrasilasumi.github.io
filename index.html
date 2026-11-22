@@ -1773,18 +1773,23 @@ function bukaLepas(e) {
     } finally { clearTimeout(to); }
     return { pasti: false };
   }
-  function formCard(key, rows, catatan, st) {
+  function formCard(key, rows, catatan, st, fnUbah, fnReset) {
     var f = FORMS[key], tb = h('table'), card = h('div', { class: 'card' });
     rows.forEach(function (r) {
       if (r.sec) { tb.append(h('tr', null, h('td', { colspan: 3, style: 'padding-top:10px' }, h('b', { text: r.sec })))); return; }
       var btn = h('button', { class: 'btn', text: 'Salin', 'aria-label': 'Salin ' + r.l, onclick: function () { salin(String(r.v), btn); } });
-      tb.append(h('tr', null, h('td', { text: r.l }), h('td', { style: 'text-align:right;font-weight:600', text: String(r.v) }), h('td', { style: 'text-align:right;width:70px' }, btn)));
+      var ubah = r.e && r.v !== r.auto, num = typeof r.auto === 'number';
+      var cell = r.e ? h('input', { type: num ? 'number' : 'text', min: num ? 0 : null, step: num ? 1 : null, value: r.v, 'aria-label': 'Nilai ' + r.l, style: 'width:' + (num ? '72px' : '110px') + ';text-align:right;font-weight:600' + (ubah ? ';border-color:var(--warn)' : ''),
+        onchange: function (ev) { var x = ev.target.value.trim(); if (num && !/^\d{1,6}$/.test(x)) { ev.target.value = r.v; return; } if (!num && !x) { ev.target.value = r.v; return; } fnUbah(r.e, num ? +x : x, r.auto); } })
+        : h('span', { style: 'font-weight:600', text: String(r.v) });
+      tb.append(h('tr', null, h('td', { text: r.l + (ubah ? ' (diubah, otomatis ' + r.auto + ')' : '') }), h('td', { style: 'text-align:right' }, cell), h('td', { style: 'text-align:right;width:70px' }, btn)));
     });
     var semua = h('button', { class: 'btn', text: 'Salin semua angka', onclick: function () { salin(rows.filter(function (r) { return !r.sec; }).map(function (r) { return r.l + ': ' + r.v; }).join('\n'), semua); } });
     var s = st && st[key];
     add(card, h('h2', { text: f.nama }),
       s ? h('div', { class: 'msg ' + (s.ok ? 'ok' : 'bad'), text: s.ok ? (s.pasti ? 'Terkirim dan dikonfirmasi Google, ' : 'Terkirim (belum bisa dikonfirmasi), ') + s.at + '.' : 'Gagal dikirim: ' + s.err }) : null,
-      h('div', { class: 'navrow', style: 'margin-bottom:8px' }, h('a', { class: 'btn', href: f.link, target: '_blank', rel: 'noopener' }, 'Buka form ↗'), semua),
+      h('div', { class: 'navrow', style: 'margin-bottom:8px' }, h('a', { class: 'btn', href: f.link, target: '_blank', rel: 'noopener' }, 'Buka form ↗'), semua,
+        rows.some(function (r) { return r.e && r.v !== r.auto; }) ? h('button', { class: 'btn', text: 'Kembalikan ke angka otomatis', onclick: function () { fnReset(key); } }) : null),
       tb);
     if (catatan) add(card, h('div', { class: 'note', text: catatan }));
     return card;
@@ -1815,9 +1820,16 @@ function bukaLepas(e) {
         { l: 'Teroris sudah NKRI', v: kasusSum(L, /teroris/), e: 1542116579 }, { l: 'Teroris belum NKRI', v: 0, e: 1253578195 },
         { l: 'Illegal logging', v: kasusSum(L, /illegallogging|kehutanan/), e: 2045909726 }, { l: 'Human trafficking', v: kasusSum(L, /perdagangan|trafficking/), e: 2124902522 }, { l: 'Pencucian uang', v: kasusSum(L, /pencucian/), e: 963911127 }]
     };
-    var ringkas = 'Overstay: semua 0, NIHIL · Narapidana ' + n + ' (Dewasa pria ' + n + ') · Tahanan ' + tahanan + ' · Seumur hidup ' + rows.tahanan[rows.tahanan.length - 3].v + ' · Mati ' + rows.tahanan[rows.tahanan.length - 2].v + ' · Residivis ' + (L.residivis || 0) + ' · Korupsi ' + rows.pidsus[0].v + ' · Narkoba ' + rows.pidsus[2].v;
+    var ov = ui.kirimOv && ui.kirimOv.tgl === L.tgl ? ui.kirimOv : (ui.kirimOv = { tgl: L.tgl, v: {} });
+    ['over', 'tahanan', 'pidsus'].forEach(function (k) {
+      rows[k].forEach(function (r) { if (r.e) { r.auto = r.v; var o = ov.v[k + '|' + r.e]; if (o !== undefined) r.v = o; } });
+    });
+    function ubahAngka(k) { return function (e, v, auto) { if (v === auto) delete ov.v[k + '|' + e]; else ov.v[k + '|' + e] = v; render(); }; }
+    function resetKartu(k) { Object.keys(ov.v).forEach(function (x) { if (x.indexOf(k + '|') === 0) delete ov.v[x]; }); render(); }
+    function nilai(k, e) { return rows[k].filter(function (r) { return r.e === e; })[0].v; }
+    var ringkas = 'Overstay: ' + (rows.over.every(function (r) { return r.e === 695447452 || r.v === 0; }) ? 'semua 0' : 'ada angka diubah') + ', ' + nilai('over', 695447452) + ' · Narapidana ' + nilai('tahanan', 492827328) + ' (Dewasa pria ' + nilai('tahanan', 1153046944) + ') · Tahanan ' + nilai('tahanan', 711426834) + ' · Seumur hidup ' + nilai('tahanan', 866273644) + ' · Mati ' + nilai('tahanan', 1661932080) + ' · Residivis ' + nilai('tahanan', 1693443024) + ' · Korupsi ' + nilai('pidsus', 1267789935) + ' · Narkoba ' + nilai('pidsus', 1192424098) + (Object.keys(ov.v).length ? ' · ' + Object.keys(ov.v).length + ' angka diubah manual' : '');
     add(root, h('div', { class: 'card' }, h('h2', { text: 'Kirim laporan harian' }),
-      h('p', { style: 'margin:0 0 8px', text: 'Angka diambil dari laporan harian ' + P.tglID(L.tgl) + (L.jam ? ' pukul ' + L.jam.replace(':', '.') + ' WIB' : '') + '. Periksa angkanya, lalu kirim ke ketiga form sekaligus, atau salin manual per angka.' }),
+      h('p', { style: 'margin:0 0 8px', text: 'Angka diambil dari laporan harian ' + P.tglID(L.tgl) + (L.jam ? ' pukul ' + L.jam.replace(':', '.') + ' WIB' : '') + '. Periksa angkanya (tiap angka bisa diketik ulang), lalu kirim ke ketiga form sekaligus, atau salin manual per angka.' }),
       L.tgl !== T ? h('div', { class: 'msg warn', text: 'Laporan terbaru bertanggal ' + P.tglID(L.tgl) + ', bukan hari ini. Unggah laporan hari ini dulu bila belum.' }) : null,
       sent.at ? h('div', { class: 'msg warn', text: 'Laporan ' + P.tglID(L.tgl) + ' sudah pernah dikirim (' + sent.at + '). Kirim lagi akan membuat jawaban ganda di form.' }) : null,
       h('div', { class: 'note', text: 'Tanggal pengisian di form: ' + tglIsi + ' (H+1 dari tanggal laporan). Nama UPT: ' + NAMA_UPT + '.' })));
@@ -1855,7 +1867,7 @@ function bukaLepas(e) {
     add(root, box);
     ['over', 'tahanan', 'pidsus'].forEach(function (k) {
       var cat = k === 'tahanan' ? 'Pola: lapas narapidana pria dewasa, jadi semua narapidana masuk "Dewasa pria".' : k === 'pidsus' ? 'Laporan WA hanya memberi total narkoba tanpa rincian, jadi semuanya ditaruh di "Pengedar".' : '';
-      add(root, formCard(k, rows[k], cat, state && state.hasil));
+      add(root, formCard(k, rows[k], cat, state && state.hasil, ubahAngka(k), resetKartu));
     });
     add(root, h('div', { class: 'faint', text: 'Hanya angka agregat. Tidak ada nama atau data pribadi WBP di halaman ini.' }));
     return root;
