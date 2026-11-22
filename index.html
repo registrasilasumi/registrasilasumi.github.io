@@ -127,9 +127,9 @@ td.rs{min-width:220px;max-width:380px}
 input[type=checkbox]{width:18px;height:18px;accent-color:var(--accent)}
 .dl{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px 20px}
 .dl div small{display:block;color:var(--ink3);font-size:11.5px}
-button.btn,label.btn{font:inherit;font-size:13px;display:inline-block;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:6px;padding:6px 12px;cursor:pointer}
-button.btn:hover,label.btn:hover{border-color:var(--ink3)}
-button.pri{background:var(--accent);border-color:var(--accent);color:var(--panel)}
+button.btn,label.btn,a.btn{font:inherit;font-size:13px;display:inline-block;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:6px;padding:6px 12px;cursor:pointer}
+button.btn:hover,label.btn:hover,a.btn:hover{border-color:var(--ink3)}
+button.pri,a.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--panel)}
 button.ghost{border:0;background:none;color:var(--ink3);padding:2px 6px;font-size:12px;cursor:pointer;font-family:inherit}
 button.ghost:hover{color:var(--bad)}
 button:disabled{opacity:.5;cursor:not-allowed}
@@ -558,6 +558,8 @@ window.API_URL = 'https://script.google.com/macros/s/AKfycbz2Ji6knZXXHTr5a3bG1If
   Store.canWrite = function () { return role === 'editor'; };
   Store.p2u = function () { return role === 'p2u'; };
   var fotoP = null;
+  /* Kirim jawaban ke Google Form lewat server (Kode.gs op 'kirimform'), supaya balasan Google bisa dibaca. */
+  Store.kirimForm = function (form, fields, hal) { return rpc('kirimform', { form: form, fields: fields, hal: hal }); };
   Store.fotos = function () { return fotoP || (fotoP = rpc('foto').then(function (r) { return r.fotos || {}; }).catch(function (e) { fotoP = null; throw e; })); };
 
   /* ---------- data: salinan lokal yang disegarkan berkala ---------- */
@@ -677,7 +679,7 @@ window.API_URL = 'https://script.google.com/macros/s/AKfycbz2Ji6knZXXHTr5a3bG1If
   var P = window.P;
   var S = { master: [], nchunks: 0, meta: null, events: [], masuk: [], mutasi: [], lap: [], loaded: {}, canWrite: true, db: null, sample: null, err: '' };
   var ui = { tab: 'beranda', q: '', fb: '', fg: '', fj: '', page: 1, bulan: '', bket: '', lapTgl: '', open: '', up: {}, redit: '', rdraft: {}, sdraft: {}, rfull: {}, rq: '' };
-  var TABS = [['beranda', 'Beranda'], ['agenda', 'Agenda'], ['sidang', 'Sidang'], ['periksa', 'Pemeriksaan'], ['bebas', 'Bebas'], ['masuk', 'WBP Baru'], ['penghuni', 'Penghuni'], ['keluar', 'WBP di Luar'], ['mutasi', 'Rencana Mutasi'], ['laporan', 'Laporan'], ['unggah', 'Unggah']];
+  var TABS = [['beranda', 'Beranda'], ['agenda', 'Agenda'], ['sidang', 'Sidang'], ['periksa', 'Pemeriksaan'], ['bebas', 'Bebas'], ['masuk', 'WBP Baru'], ['penghuni', 'Penghuni'], ['keluar', 'WBP di Luar'], ['mutasi', 'Rencana Mutasi'], ['laporan', 'Laporan'], ['kirim', 'Kirim Laporan'], ['unggah', 'Unggah']];
   var $view = document.getElementById('view');
 
   function h(tag, a) {
@@ -817,7 +819,7 @@ window.API_URL = 'https://script.google.com/macros/s/AKfycbz2Ji6knZXXHTr5a3bG1If
     if (L) f.append(h('span', { class: 'chip', text: 'Laporan ' + P.tglID(L.tgl) + (L.jam ? ', ' + L.jam.replace(':', '.') : '') }));
     if (S.meta) f.append(h('span', { class: 'chip', text: 'Excel SDP ' + fmtAt(S.meta.at) }));
   }
-  function visTabs() { if (p2u()) return TABS.filter(function (t) { return t[0] === 'agenda'; }); return TABS.filter(function (t) { return (t[0] !== 'unggah' && t[0] !== 'laporan') || wr(); }); }
+  function visTabs() { if (p2u()) return TABS.filter(function (t) { return t[0] === 'agenda'; }); return TABS.filter(function (t) { return (t[0] !== 'unggah' && t[0] !== 'laporan' && t[0] !== 'kirim') || wr(); }); }
   function nav() {
     var n = clear(document.getElementById('nav'));
     if (p2u()) { n.append(h('button', { role: 'tab', 'aria-selected': 'true' }, 'Agenda')); var bb = document.getElementById('bnav'); if (bb) bb.hidden = true; return; }
@@ -1729,6 +1731,136 @@ function bukaLepas(e) {
 
   /* ---------- Unggah ---------- */
   function setU(k, v) { ui.up[k] = Object.assign(ui.up[k] || {}, v); drawUp(); }
+
+  /* ---------- Kirim Laporan: angka laporan harian untuk 3 Google Form ---------- */
+  /* ID formulir dan ID isian (entry.N) dibaca dari ketiga Google Form pada 2026-11-22. Jika petugas mengubah pertanyaan di form, ID di sini perlu diperbarui. */
+  var FORMS = {
+    over: { nama: 'Overstay', link: 'https://forms.gle/tBdfADijNwrSw4pF8', id: '1FAIpQLSfPgO7nVVUWnsfxpvdf62NaT8gJhqEzhmQGAwnESVGXL7UdgA', tgl: 233560637, upt: 1441958066, hal: 0 },
+    tahanan: { nama: 'Jumlah Tahanan/Napi', link: 'https://forms.gle/ZMi5CArxcEB3ciUd8', id: '1FAIpQLSeLI5Da-3D4Lbivm5L0QmcaVCJzxLZjhTc_O8GcudqFN1YPNw', tgl: 1437060384, upt: 1759823495, hal: 5 },
+    pidsus: { nama: 'Pidana Khusus', link: 'https://forms.gle/zknKkSYKSVLzxP597', id: '1FAIpQLSc7Oi7q2ILGA85fsAGbtwmOPU95lRNjUlME6LxrFxgkSeySyQ', tgl: 1060541742, upt: 785485025, hal: 1 }
+  };
+  var NAMA_UPT = 'Lapas Kelas I Sukamiskin';
+  function kasusSum(L, re) {
+    var n = 0;
+    Object.keys(L.kasus || {}).forEach(function (k) { if (re.test(k.toLowerCase().replace(/\s+/g, ''))) n += L.kasus[k] || 0; });
+    return n;
+  }
+  function salin(teks, btn) {
+    var ok = function () { var t = btn.textContent; btn.textContent = 'Tersalin'; setTimeout(function () { btn.textContent = t; }, 1200); };
+    try { navigator.clipboard.writeText(teks).then(ok, function () { window.prompt('Salin teks ini:', teks); }); } catch (e) { window.prompt('Salin teks ini:', teks); }
+  }
+  /* Kirim satu form. Lewat server: hasil pasti. Cadangan langsung dari browser (no-cors): hasil tidak bisa dipastikan. */
+  async function kirimSatu(key, rows, tglIsi) {
+    var f = FORMS[key], fields = {}, d = tglIsi.split('-');
+    fields['entry.' + f.upt] = NAMA_UPT;
+    fields['entry.' + f.tgl + '_year'] = d[0]; fields['entry.' + f.tgl + '_month'] = String(+d[1]); fields['entry.' + f.tgl + '_day'] = String(+d[2]);
+    rows.forEach(function (r) { if (r.e) fields['entry.' + r.e] = String(r.v); });
+    // Jalur utama: lewat server Apps Script, yang membaca halaman konfirmasi Google ("jawaban telah direkam").
+    try {
+      await window.Store.kirimForm(key, fields, f.hal);
+      return { pasti: true };
+    } catch (e) {
+      // Server belum diperbarui (op belum dikenal): kirim langsung dari browser. Hasilnya tidak bisa dipastikan.
+      if (!(e && e.code === 'invalid_argument' && /tidak dikenal/i.test(e.message || ''))) throw e;
+    }
+    var q = new URLSearchParams();
+    Object.keys(fields).forEach(function (k) { q.set(k, fields[k]); });
+    var hist = []; for (var i = 0; i <= f.hal; i++) hist.push(i);
+    q.set('pageHistory', hist.join(','));
+    var ctl = new AbortController(), to = setTimeout(function () { ctl.abort(); }, 20000);
+    try {
+      await fetch('https://docs.google.com/forms/d/e/' + f.id + '/formResponse', { method: 'POST', mode: 'no-cors', credentials: 'omit', body: q, signal: ctl.signal });
+    } finally { clearTimeout(to); }
+    return { pasti: false };
+  }
+  function formCard(key, rows, catatan, st) {
+    var f = FORMS[key], tb = h('table'), card = h('div', { class: 'card' });
+    rows.forEach(function (r) {
+      if (r.sec) { tb.append(h('tr', null, h('td', { colspan: 3, style: 'padding-top:10px' }, h('b', { text: r.sec })))); return; }
+      var btn = h('button', { class: 'btn', text: 'Salin', 'aria-label': 'Salin ' + r.l, onclick: function () { salin(String(r.v), btn); } });
+      tb.append(h('tr', null, h('td', { text: r.l }), h('td', { style: 'text-align:right;font-weight:600', text: String(r.v) }), h('td', { style: 'text-align:right;width:70px' }, btn)));
+    });
+    var semua = h('button', { class: 'btn', text: 'Salin semua angka', onclick: function () { salin(rows.filter(function (r) { return !r.sec; }).map(function (r) { return r.l + ': ' + r.v; }).join('\n'), semua); } });
+    var s = st && st[key];
+    add(card, h('h2', { text: f.nama }),
+      s ? h('div', { class: 'msg ' + (s.ok ? 'ok' : 'bad'), text: s.ok ? (s.pasti ? 'Terkirim dan dikonfirmasi Google, ' : 'Terkirim (belum bisa dikonfirmasi), ') + s.at + '.' : 'Gagal dikirim: ' + s.err }) : null,
+      h('div', { class: 'navrow', style: 'margin-bottom:8px' }, h('a', { class: 'btn', href: f.link, target: '_blank', rel: 'noopener' }, 'Buka form ↗'), semua),
+      tb);
+    if (catatan) add(card, h('div', { class: 'note', text: catatan }));
+    return card;
+  }
+  function vKirim() {
+    if (!wr()) return h('div', { class: 'card' }, empty('Khusus admin', 'Kirim laporan hanya bisa dibuka dengan kode editor.'));
+    var L = S.lap[0], root = h('div');
+    if (!L) return h('div', { class: 'card' }, empty('Belum ada laporan harian', 'Tempel teks laporan di tab Unggah dulu, angkanya akan muncul di sini.'));
+    var napi = ui.kirimNapi != null && ui.kirimNapi !== '' ? +ui.kirimNapi : L.jumlah, T = today();
+    var tahanan = Object.keys(L.gol || {}).reduce(function (a, k) { return a + (/^A(I|II|III|IV|V)$/.test(k) ? L.gol[k] || 0 : 0); }, 0);
+    var dt = new Date(L.tgl + 'T00:00:00Z'); dt.setUTCDate(dt.getUTCDate() + 1);
+    var tglIsi = dt.toISOString().slice(0, 10), n = isNaN(napi) ? 0 : napi;
+    var sent = L.kirim || {}, state = ui.kirimStatus && ui.kirimStatus.tgl === L.tgl ? ui.kirimStatus : null;
+    var rows = {
+      over: [
+        { l: 'Jumlah Overstaying A.I', v: 0, e: 17694536 }, { l: 'Jumlah Overstaying A.II', v: 0, e: 560989045 }, { l: 'Jumlah Overstaying A.III', v: 0, e: 2016930243 },
+        { l: 'Jumlah Overstaying A.IV', v: 0, e: 206658934 }, { l: 'Jumlah Overstaying A.V', v: 0, e: 704120626 },
+        { l: 'Jumlah Tahanan Bebas Demi Hukum', v: 0, e: 765764798 }, { l: 'Keterangan', v: 'NIHIL', e: 695447452 }],
+      tahanan: [
+        { sec: 'Halaman NIK' }, { l: 'Narapidana sudah ada NIK', v: n, e: 492827328 }, { l: 'Narapidana belum ada NIK', v: 0, e: 796412175 }, { l: 'Tahanan sudah ada NIK', v: tahanan, e: 1944241532 }, { l: 'Tahanan belum ada NIK', v: 0, e: 788681242 },
+        { sec: 'Halaman KTP' }, { l: 'Narapidana sudah ada KTP', v: n, e: 352893251 }, { l: 'Narapidana belum ada KTP', v: 0, e: 576485477 }, { l: 'Tahanan sudah ada KTP', v: tahanan, e: 1270322658 }, { l: 'Tahanan belum ada KTP', v: 0, e: 493024182 },
+        { sec: 'Halaman Tahanan' }, { l: 'Dewasa pria', v: tahanan, e: 711426834 }, { l: 'Dewasa wanita', v: 0, e: 336978424 }, { l: 'Anak laki-laki', v: 0, e: 729556998 }, { l: 'Anak perempuan', v: 0, e: 352873811 },
+        { sec: 'Halaman Narapidana' }, { l: 'Dewasa pria', v: n, e: 1153046944 }, { l: 'Dewasa wanita', v: 0, e: 1000834798 }, { l: 'Anak laki-laki', v: 0, e: 1645521663 }, { l: 'Anak perempuan', v: 0, e: 476533616 },
+        { sec: 'Lainnya' }, { l: 'WNA', v: kasusSum(L, /^wna$|asing/), e: 2143765496 }, { l: 'Pidana seumur hidup', v: kasusSum(L, /^pidana(sh|seumurhidup)/) || (L.gol && L.gol.SH) || 0, e: 866273644 }, { l: 'Pidana mati', v: kasusSum(L, /^pidanamati/), e: 1661932080 }, { l: 'Residivis', v: L.residivis || 0, e: 1693443024 }],
+      pidsus: [
+        { l: 'Korupsi', v: kasusSum(L, /korupsi/), e: 1267789935 },
+        { l: 'Bandar narkoba', v: 0, e: 353343539 }, { l: 'Pengedar narkoba', v: kasusSum(L, /narkoba|narkotika|psikotropika/), e: 1192424098 }, { l: 'Pengguna narkoba', v: 0, e: 88546858 },
+        { l: 'Teroris sudah NKRI', v: kasusSum(L, /teroris/), e: 1542116579 }, { l: 'Teroris belum NKRI', v: 0, e: 1253578195 },
+        { l: 'Illegal logging', v: kasusSum(L, /illegallogging|kehutanan/), e: 2045909726 }, { l: 'Human trafficking', v: kasusSum(L, /perdagangan|trafficking/), e: 2124902522 }, { l: 'Pencucian uang', v: kasusSum(L, /pencucian/), e: 963911127 }]
+    };
+    var ringkas = 'Overstay: semua 0, NIHIL · Narapidana ' + n + ' (Dewasa pria ' + n + ') · Tahanan ' + tahanan + ' · Seumur hidup ' + rows.tahanan[rows.tahanan.length - 3].v + ' · Mati ' + rows.tahanan[rows.tahanan.length - 2].v + ' · Residivis ' + (L.residivis || 0) + ' · Korupsi ' + rows.pidsus[0].v + ' · Narkoba ' + rows.pidsus[2].v;
+    add(root, h('div', { class: 'card' }, h('h2', { text: 'Kirim laporan harian' }),
+      h('p', { style: 'margin:0 0 8px', text: 'Angka diambil dari laporan harian ' + P.tglID(L.tgl) + (L.jam ? ' pukul ' + L.jam.replace(':', '.') + ' WIB' : '') + '. Periksa angkanya, lalu kirim ke ketiga form sekaligus, atau salin manual per angka.' }),
+      L.tgl !== T ? h('div', { class: 'msg warn', text: 'Laporan terbaru bertanggal ' + P.tglID(L.tgl) + ', bukan hari ini. Unggah laporan hari ini dulu bila belum.' }) : null,
+      sent.at ? h('div', { class: 'msg warn', text: 'Laporan ' + P.tglID(L.tgl) + ' sudah pernah dikirim (' + sent.at + '). Kirim lagi akan membuat jawaban ganda di form.' }) : null,
+      h('div', { class: 'note', text: 'Tanggal pengisian di form: ' + tglIsi + ' (H+1 dari tanggal laporan). Nama UPT: ' + NAMA_UPT + '.' })));
+    var inp = h('input', { type: 'number', min: 0, value: napi, 'aria-label': 'Total narapidana', style: 'width:90px', onchange: function () { ui.kirimNapi = inp.value; render(); } });
+    add(root, h('div', { class: 'card' }, h('div', { class: 'bar2' }, h('span', { text: 'Total narapidana (ubah bila perlu dikoreksi dari ' + L.jumlah + ')' }), inp)));
+    var box = h('div', { class: 'card' }, h('h2', { text: 'Kirim ke 3 form' }));
+    if (!ui.kirimConfirm) {
+      add(box, h('button', { class: 'btn pri', text: 'Kirim ke 3 form…', disabled: state && state.busy, onclick: function () { ui.kirimConfirm = true; render(); } }));
+    } else {
+      add(box, h('div', { class: 'msg warn', text: 'Yakin kirim sekarang? Angka ini akan masuk ke 3 Google Form dan tidak bisa ditarik dari website.' }), h('p', { class: 'note', text: ringkas }),
+        h('div', { class: 'navrow', style: 'margin-top:8px' },
+          h('button', { class: 'btn pri', text: 'Ya, kirim', onclick: async function () {
+            ui.kirimConfirm = false;
+            var ss = { tgl: L.tgl, busy: true, hasil: {} }; ui.kirimStatus = ss; render();
+            var jam = new Intl.DateTimeFormat('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit' }).format(new Date()).replace(':', '.');
+            for (var k of ['over', 'tahanan', 'pidsus']) {
+              try { var hs = await kirimSatu(k, rows[k], tglIsi); ss.hasil[k] = { ok: true, pasti: hs.pasti, at: 'pukul ' + jam + ' WIB' }; }
+              catch (e) { ss.hasil[k] = { ok: false, err: (e && e.message) || ((e && e.name === 'AbortError') ? 'waktu habis' : 'jaringan terputus atau diblokir') }; }
+              render();
+            }
+            ss.busy = false;
+            if (['over', 'tahanan', 'pidsus'].every(function (k) { return ss.hasil[k].ok; })) {
+              try { await S.db.doc('laporan/' + L.tgl).update({ kirim: { at: P.tglID(today()) + ', ' + jam + ' WIB' } }); } catch (e) { /* catatan "sudah dikirim" gagal disimpan, tidak mengubah hasil kirim */ }
+            }
+            render();
+          } }),
+          h('button', { class: 'btn', text: 'Batal', onclick: function () { ui.kirimConfirm = false; render(); } })));
+    }
+    if (state) {
+      var oke = ['over', 'tahanan', 'pidsus'].filter(function (k) { return state.hasil[k] && state.hasil[k].ok; }).length, tot = Object.keys(state.hasil).length;
+      if (state.busy) add(box, h('div', { class: 'msg', text: 'Mengirim… (' + tot + ' dari 3 selesai)' }));
+      else if (oke === 3) add(box, h('div', { class: 'msg ok', text: (['over', 'tahanan', 'pidsus'].every(function (k) { return state.hasil[k].pasti; }) ? 'Ketiga form terkirim dan dikonfirmasi Google ("jawaban telah direkam").' : 'Ketiga form terkirim tanpa galat, tetapi belum bisa dikonfirmasi karena server belum diperbarui. Lihat petunjuk di backend/KirimForm.gs.') }));
+      else add(box, h('div', { class: 'msg bad', text: 'Sebagian form gagal. Form yang sudah terkirim tidak perlu dikirim ulang; kirim yang gagal lewat tombol Buka form di kartu masing-masing, atau tunggu dan coba lagi.' }));
+    }
+    add(root, box);
+    ['over', 'tahanan', 'pidsus'].forEach(function (k) {
+      var cat = k === 'tahanan' ? 'Pola: lapas narapidana pria dewasa, jadi semua narapidana masuk "Dewasa pria".' : k === 'pidsus' ? 'Laporan WA hanya memberi total narkoba tanpa rincian, jadi semuanya ditaruh di "Pengedar".' : '';
+      add(root, formCard(k, rows[k], cat, state && state.hasil));
+    });
+    add(root, h('div', { class: 'faint', text: 'Hanya angka agregat. Tidak ada nama atau data pribadi WBP di halaman ini.' }));
+    return root;
+  }
+
   /* ---------- Laporan bulanan (khusus admin) ---------- */
   function lbMonths() {
     var m = {};
@@ -2457,7 +2589,7 @@ function bukaLepas(e) {
     var v;
     if (p2u()) ui.tab = 'agenda';
     try {
-      v = ui.tab === 'beranda' ? vBeranda() : ui.tab === 'sidang' ? vJadwal('sidang') : ui.tab === 'periksa' ? vJadwal('periksa') : ui.tab === 'bebas' ? vBebas() : ui.tab === 'masuk' ? vMasuk() : ui.tab === 'penghuni' ? vPenghuni() : ui.tab === 'keluar' ? vKeluar() : ui.tab === 'mutasi' ? vMutasi() : ui.tab === 'agenda' ? vAgenda() : ui.tab === 'laporan' ? vLaporan() : vUnggah();
+      v = ui.tab === 'beranda' ? vBeranda() : ui.tab === 'sidang' ? vJadwal('sidang') : ui.tab === 'periksa' ? vJadwal('periksa') : ui.tab === 'bebas' ? vBebas() : ui.tab === 'masuk' ? vMasuk() : ui.tab === 'penghuni' ? vPenghuni() : ui.tab === 'keluar' ? vKeluar() : ui.tab === 'mutasi' ? vMutasi() : ui.tab === 'agenda' ? vAgenda() : ui.tab === 'laporan' ? vLaporan() : ui.tab === 'kirim' ? vKirim() : vUnggah();
     } catch (e) { v = h('div', { class: 'msg bad', text: 'Tampilan gagal dibuat: ' + (e.message || e) }); }
     clear($view).append(v);
     document.getElementById('ptitle').textContent = 'Registrasi Lapas Kelas I Sukamiskin · ' + (TABS.filter(function (t) { return t[0] === ui.tab; })[0] || ['', ''])[1] + ' · ' + P.tglID(today(), true);
