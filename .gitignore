@@ -1,3 +1,5 @@
 _backup/
 .netlify/
 .DS_Store
+backend/.clasp.json
+.clasprc.json
