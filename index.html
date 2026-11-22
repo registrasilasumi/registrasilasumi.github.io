@@ -558,6 +558,8 @@ window.API_URL = 'https://script.google.com/macros/s/AKfycbz2Ji6knZXXHTr5a3bG1If
   Store.canWrite = function () { return role === 'editor'; };
   Store.p2u = function () { return role === 'p2u'; };
   var fotoP = null;
+  /* Kirim jawaban ke Google Form lewat server (Kode.gs op 'kirimform'), supaya balasan Google bisa dibaca. */
+  Store.kirimForm = function (form, fields, hal) { return rpc('kirimform', { form: form, fields: fields, hal: hal }); };
   Store.fotos = function () { return fotoP || (fotoP = rpc('foto').then(function (r) { return r.fotos || {}; }).catch(function (e) { fotoP = null; throw e; })); };
 
   /* ---------- data: salinan lokal yang disegarkan berkala ---------- */
@@ -1747,20 +1749,29 @@ function bukaLepas(e) {
     var ok = function () { var t = btn.textContent; btn.textContent = 'Tersalin'; setTimeout(function () { btn.textContent = t; }, 1200); };
     try { navigator.clipboard.writeText(teks).then(ok, function () { window.prompt('Salin teks ini:', teks); }); } catch (e) { window.prompt('Salin teks ini:', teks); }
   }
-  /* Kirim satu form lewat POST ke /formResponse. Mode no-cors: browser tidak boleh membaca balasan Google,
-     jadi "berhasil" berarti permintaan terkirim tanpa galat jaringan, bukan konfirmasi dari Google. */
+  /* Kirim satu form. Lewat server: hasil pasti. Cadangan langsung dari browser (no-cors): hasil tidak bisa dipastikan. */
   async function kirimSatu(key, rows, tglIsi) {
-    var f = FORMS[key], q = new URLSearchParams();
-    var d = tglIsi.split('-');
-    q.set('entry.' + f.upt, NAMA_UPT);
-    q.set('entry.' + f.tgl + '_year', d[0]); q.set('entry.' + f.tgl + '_month', String(+d[1])); q.set('entry.' + f.tgl + '_day', String(+d[2]));
-    rows.forEach(function (r) { if (r.e) q.set('entry.' + r.e, String(r.v)); });
+    var f = FORMS[key], fields = {}, d = tglIsi.split('-');
+    fields['entry.' + f.upt] = NAMA_UPT;
+    fields['entry.' + f.tgl + '_year'] = d[0]; fields['entry.' + f.tgl + '_month'] = String(+d[1]); fields['entry.' + f.tgl + '_day'] = String(+d[2]);
+    rows.forEach(function (r) { if (r.e) fields['entry.' + r.e] = String(r.v); });
+    // Jalur utama: lewat server Apps Script, yang membaca halaman konfirmasi Google ("jawaban telah direkam").
+    try {
+      await window.Store.kirimForm(key, fields, f.hal);
+      return { pasti: true };
+    } catch (e) {
+      // Server belum diperbarui (op belum dikenal): kirim langsung dari browser. Hasilnya tidak bisa dipastikan.
+      if (!(e && e.code === 'invalid_argument' && /tidak dikenal/i.test(e.message || ''))) throw e;
+    }
+    var q = new URLSearchParams();
+    Object.keys(fields).forEach(function (k) { q.set(k, fields[k]); });
     var hist = []; for (var i = 0; i <= f.hal; i++) hist.push(i);
     q.set('pageHistory', hist.join(','));
     var ctl = new AbortController(), to = setTimeout(function () { ctl.abort(); }, 20000);
     try {
       await fetch('https://docs.google.com/forms/d/e/' + f.id + '/formResponse', { method: 'POST', mode: 'no-cors', credentials: 'omit', body: q, signal: ctl.signal });
     } finally { clearTimeout(to); }
+    return { pasti: false };
   }
   function formCard(key, rows, catatan, st) {
     var f = FORMS[key], tb = h('table'), card = h('div', { class: 'card' });
@@ -1772,7 +1783,7 @@ function bukaLepas(e) {
     var semua = h('button', { class: 'btn', text: 'Salin semua angka', onclick: function () { salin(rows.filter(function (r) { return !r.sec; }).map(function (r) { return r.l + ': ' + r.v; }).join('\n'), semua); } });
     var s = st && st[key];
     add(card, h('h2', { text: f.nama }),
-      s ? h('div', { class: 'msg ' + (s.ok ? 'ok' : 'bad'), text: s.ok ? 'Terkirim ' + s.at + '.' : 'Gagal dikirim: ' + s.err }) : null,
+      s ? h('div', { class: 'msg ' + (s.ok ? 'ok' : 'bad'), text: s.ok ? (s.pasti ? 'Terkirim dan dikonfirmasi Google, ' : 'Terkirim (belum bisa dikonfirmasi), ') + s.at + '.' : 'Gagal dikirim: ' + s.err }) : null,
       h('div', { class: 'navrow', style: 'margin-bottom:8px' }, h('a', { class: 'btn', href: f.link, target: '_blank', rel: 'noopener' }, 'Buka form ↗'), semua),
       tb);
     if (catatan) add(card, h('div', { class: 'note', text: catatan }));
@@ -1823,8 +1834,8 @@ function bukaLepas(e) {
             var ss = { tgl: L.tgl, busy: true, hasil: {} }; ui.kirimStatus = ss; render();
             var jam = new Intl.DateTimeFormat('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit' }).format(new Date()).replace(':', '.');
             for (var k of ['over', 'tahanan', 'pidsus']) {
-              try { await kirimSatu(k, rows[k], tglIsi); ss.hasil[k] = { ok: true, at: 'pukul ' + jam + ' WIB' }; }
-              catch (e) { ss.hasil[k] = { ok: false, err: (e && e.name === 'AbortError') ? 'waktu habis' : 'jaringan terputus atau diblokir' }; }
+              try { var hs = await kirimSatu(k, rows[k], tglIsi); ss.hasil[k] = { ok: true, pasti: hs.pasti, at: 'pukul ' + jam + ' WIB' }; }
+              catch (e) { ss.hasil[k] = { ok: false, err: (e && e.message) || ((e && e.name === 'AbortError') ? 'waktu habis' : 'jaringan terputus atau diblokir') }; }
               render();
             }
             ss.busy = false;
@@ -1838,8 +1849,8 @@ function bukaLepas(e) {
     if (state) {
       var oke = ['over', 'tahanan', 'pidsus'].filter(function (k) { return state.hasil[k] && state.hasil[k].ok; }).length, tot = Object.keys(state.hasil).length;
       if (state.busy) add(box, h('div', { class: 'msg', text: 'Mengirim… (' + tot + ' dari 3 selesai)' }));
-      else if (oke === 3) add(box, h('div', { class: 'msg ok', text: 'Ketiga form terkirim tanpa galat. Google tidak membalas ke website, jadi cek tab Tanggapan di form bila ingin memastikan.' }));
-      else add(box, h('div', { class: 'msg bad', text: 'Sebagian form gagal. Form yang sudah terkirim tidak perlu dikirim ulang; kirim yang gagal lewat tombol Buka form di kartu masing-masing.' }));
+      else if (oke === 3) add(box, h('div', { class: 'msg ok', text: (['over', 'tahanan', 'pidsus'].every(function (k) { return state.hasil[k].pasti; }) ? 'Ketiga form terkirim dan dikonfirmasi Google ("jawaban telah direkam").' : 'Ketiga form terkirim tanpa galat, tetapi belum bisa dikonfirmasi karena server belum diperbarui. Lihat petunjuk di backend/KirimForm.gs.') }));
+      else add(box, h('div', { class: 'msg bad', text: 'Sebagian form gagal. Form yang sudah terkirim tidak perlu dikirim ulang; kirim yang gagal lewat tombol Buka form di kartu masing-masing, atau tunggu dan coba lagi.' }));
     }
     add(root, box);
     ['over', 'tahanan', 'pidsus'].forEach(function (k) {
