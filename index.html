@@ -222,10 +222,9 @@ details>summary{cursor:pointer;color:var(--ink2);padding:6px 0}
 <script src="berkas.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/heic2any/0.0.4/heic2any.min.js"></script>
+<script src="config.js"></script>
 <script>
 window.PEMBACA_URL = 'https://claude.ai/artifact/CVCErEk8gzB9wXBQWebYny';
-/* Alamat web app Apps Script (berakhiran /exec). Ganti jika deployment berubah. */
-window.API_URL = 'https://script.google.com/macros/s/AKfycbz2Ji6knZXXHTr5a3bG1IfUPWEJFrZi64RBNHdWafWeYZOo3ygAt8QYaW75FZYhnq95Gg/exec';
 </script>
 <script>
 (function (root) {
@@ -521,7 +520,7 @@ window.API_URL = 'https://script.google.com/macros/s/AKfycbz2Ji6knZXXHTr5a3bG1If
 
   function rpc(op, args) {
     var url = root.API_URL || '';
-    if (!url || /GANTI/.test(url)) return Promise.reject(err('unavailable', 'Alamat server belum diisi. Ubah API_URL di bagian atas berkas index.html.'));
+    if (!url || /GANTI/.test(url)) return Promise.reject(err('unavailable', 'Alamat server belum diisi. Ubah API_URL di berkas config.js.'));
     return fetch(url, {
       method: 'POST',
       redirect: 'follow',

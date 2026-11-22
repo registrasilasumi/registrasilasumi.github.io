@@ -408,11 +408,12 @@ body.paused .paused-badge{display:inline-block}
 <div class="hint" id="hint">Klik layar sekali = suara aktif · F = layar penuh · Spasi = jeda · ← → = pindah slide · T = tema</div>
 <div id="gate"><form id="gf"><h1>Mode TV</h1><p>Masukkan kode akses (kode lihat) sekali saja. Kode diingat di browser ini.</p><input id="gk" type="password" autocomplete="off" placeholder="Kode akses"><div class="e" id="ge"></div><button>Tampilkan</button></form></div>
 
+<script src="config.js"></script>
 <script>
 (function () {
   'use strict';
-  // Alamat API Apps Script (sama dengan window.API_URL di index.html). Ubah di sini jika deployment diganti.
-  var API = 'https://script.google.com/macros/s/AKfycbz2Ji6knZXXHTr5a3bG1IfUPWEJFrZi64RBNHdWafWeYZOo3ygAt8QYaW75FZYhnq95Gg/exec';
+  // Alamat API Apps Script diambil dari config.js (dipakai bersama index.html).
+  var API = window.API_URL || '';
   var Q = new URLSearchParams(location.search);
   var DETIK = Math.max(5, parseInt(Q.get('detik'), 10) || 15);   // lama tiap slide
   var DBASE = DETIK, DUR2 = Math.max(5, parseInt(Q.get('detik2'), 10) || 7);   // slide Remisi dan sesudahnya: 7 detik
