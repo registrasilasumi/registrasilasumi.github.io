@@ -46,8 +46,8 @@ header>*{position:relative;z-index:1}
 main{position:relative;padding:1.4rem 2.4rem 0;min-height:0}
 .slide{position:absolute;inset:1.4rem 2.4rem 0;display:flex;flex-direction:column;gap:1.2rem;animation:in .6s ease both}
 .slide.out{animation:out .45s ease both}
-@keyframes in{from{opacity:0;transform:translateY(.8rem)}to{opacity:1;transform:none}}
-@keyframes out{from{opacity:1}to{opacity:0}}
+@keyframes in{from{opacity:0;transform:translateX(2.6rem) scale(.985)}to{opacity:1;transform:none}}
+@keyframes out{from{opacity:1;transform:none}to{opacity:0;transform:translateX(-2.2rem) scale(.985)}}
 .stitle{display:flex;align-items:baseline;gap:1rem}
 .stitle h1{font-size:1.9rem;font-weight:700;letter-spacing:.01em}
 .stitle span{color:var(--ink2);font-size:1.05rem}
@@ -370,6 +370,98 @@ body.paused .paused-badge{display:inline-block}
 .rm .rm-g2 .rm-tl b{display:inline;white-space:nowrap}
 .rm .rm-g2{grid-template-rows:1.1fr 1fr}
 .rm .rm-g2 .rm-tl div{padding:calc(3*var(--u)) calc(7*var(--u))}
+/* Perapihan slide informasi: tinggi gambar seragam, tidak ada teks terpotong */
+.rm .rm-stp .rm-sc{height:calc(40*var(--u));flex:none}
+.rm .rm-stp .rm-sc svg{height:100%;width:100%}
+.rm .rm-stp .rm-hd{min-height:calc(17*var(--u))}
+.rm .rm-stp .rm-pill{margin-top:auto}
+.rm .rm-g2 .rm-cd:first-child{display:flex;flex-direction:column}
+.rm .rm-g2 .rm-cd:first-child .rm-li{padding:calc(5.5*var(--u)) 0}
+.rm .rm-g2 .rm-cd:first-child .rm-note{margin-top:auto}
+.rm .rm-g2{grid-template-rows:auto 1fr}
+.rm .rm-g2 .rm-cd.sal{padding-top:calc(6*var(--u));padding-bottom:calc(4*var(--u))}
+.rm .rm-g2 .rm-cd.sal .rm-li{padding:calc(1.6*var(--u)) 0}
+.rm .rm-g2 .rm-cd.sal h2{padding-right:calc(78*var(--u))}
+.rm .rm-g2 .rm-cd.sal .rm-mini{width:calc(62*var(--u));top:calc(3*var(--u))}
+.rm .rj-h{min-height:calc(21*var(--u))}
+.rm .rj-c p{font-size:calc(8*var(--u));line-height:1.25}
+.rm .hk-r p{font-size:calc(7.9*var(--u));line-height:1.2}
+.rm .hi-c.q{padding:calc(6*var(--u)) calc(9*var(--u));justify-content:center;gap:calc(1*var(--u))}
+.rm .hi-c.q h3{margin-bottom:calc(2*var(--u))}
+.rm .hi-t{min-height:calc(40*var(--u))}.rm .hi-t h3{font-size:calc(8.8*var(--u))}
+.rm .hi-ck{padding:calc(2.2*var(--u)) 0;font-size:calc(8.8*var(--u));line-height:1.2}
+/* Animasi tambahan: kilau alur, ikon hidup, bar tumbuh */
+@keyframes sweep{from{background-position:130% 0}to{background-position:-30% 0}}
+@keyframes ring{0%{transform:scale(1);opacity:.55}100%{transform:scale(1.55);opacity:0}}
+@keyframes iconfl{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-6%) rotate(3deg)}}
+.rm .rm-stp,.rm .pk-c{position:relative}
+.rm .rm-stp::before,.rm .pk-c::before{content:"";position:absolute;left:calc(-1*var(--u));right:calc(-1*var(--u));top:calc(-3*var(--u));height:calc(3*var(--u));border-radius:calc(7*var(--u)) calc(7*var(--u)) 0 0;pointer-events:none;
+  background:linear-gradient(100deg,transparent 35%,rgba(255,255,255,.95) 50%,transparent 65%);background-size:300% 100%;background-position:130% 0;animation:sweep 3.6s ease-in-out infinite}
+.rm .rm-g8>:nth-child(1)::before,.rm .pk-g>:nth-child(1)::before{animation-delay:0s}
+.rm .rm-g8>:nth-child(2)::before,.rm .pk-g>:nth-child(2)::before{animation-delay:.35s}
+.rm .rm-g8>:nth-child(3)::before,.rm .pk-g>:nth-child(3)::before{animation-delay:.7s}
+.rm .rm-g8>:nth-child(4)::before,.rm .pk-g>:nth-child(4)::before{animation-delay:1.05s}
+.rm .rm-g8>:nth-child(5)::before,.rm .pk-g>:nth-child(5)::before{animation-delay:1.4s}
+.rm .rm-g8>:nth-child(6)::before,.rm .pk-g>:nth-child(6)::before{animation-delay:1.75s}
+.rm .rm-g8>:nth-child(7)::before,.rm .pk-g>:nth-child(7)::before{animation-delay:2.1s}
+.rm .rm-g8>:nth-child(8)::before,.rm .pk-g>:nth-child(8)::before{animation-delay:2.45s}
+.rm .hi-i,.rm .kw-i,.rm .hk-i,.rm .pk-i{position:relative}
+.rm .hi-i::after,.rm .kw-i::after,.rm .hk-i::after,.rm .pk-i::after{content:"";position:absolute;inset:0;border-radius:50%;border:calc(1.5*var(--u)) solid var(--c,#2E6B3B);opacity:0;pointer-events:none;animation:ring 2.8s ease-out infinite}
+.rm .hi-c:nth-child(even) .hi-i::after,.rm .kw-c:nth-child(even) .kw-i::after,.rm .hk-r:nth-child(even) .hk-i::after,.rm .pk-c:nth-child(even) .pk-i::after{animation-delay:1.4s}
+.rm .hi-i svg,.rm .kw-i svg,.rm .hk-i svg,.rm .pk-i svg{animation:iconfl 3.4s ease-in-out infinite}
+.rm .hi-c:nth-child(even) .hi-i svg,.rm .kw-c:nth-child(even) .kw-i svg,.rm .hk-r:nth-child(even) .hk-i svg,.rm .pk-c:nth-child(even) .pk-i svg{animation-delay:1.7s}
+.rm .rm-no,.rm .pk-no,.rm .rj-n,.rm .hk-n{animation:rm_pulse 4s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){.rm .rm-stp::before,.rm .pk-c::before,.rm [class$="-i"]::after,.rm [class$="-i"] svg{animation:none!important}}
+/* Ilustrasi beranimasi: Layanan Remisi dan Hak Integrasi */
+@keyframes lc_ring{0%,50%,100%{transform:rotate(0)}8%,24%,40%{transform:rotate(-16deg)}16%,32%,48%{transform:rotate(16deg)}}
+@keyframes lc_draw{0%,8%{stroke-dashoffset:1}38%,88%{stroke-dashoffset:0}100%{stroke-dashoffset:1}}
+@keyframes lc_rot{to{transform:rotate(360deg)}}
+@keyframes lc_door{0%,12%{transform:scaleX(1)}42%,78%{transform:scaleX(.16)}100%{transform:scaleX(1)}}
+@keyframes lc_tilt{0%,100%{transform:rotate(-7deg)}50%{transform:rotate(7deg)}}
+@keyframes lc_walk{0%{transform:translateX(-18px);opacity:0}20%{opacity:1}80%{opacity:1}100%{transform:translateX(16px);opacity:0}}
+@keyframes lc_fly{0%{transform:translate(-8px,10px) scale(.7);opacity:0}25%{opacity:1}100%{transform:translate(26px,-28px) scale(1);opacity:0}}
+@keyframes lc_unlock{0%,18%{transform:translateY(0) rotate(0)}45%,78%{transform:translateY(-10px) rotate(-16deg)}100%{transform:translateY(0) rotate(0)}}
+@keyframes lc_hit{0%,55%,100%{transform:rotate(-28deg)}70%{transform:rotate(12deg)}80%{transform:rotate(-4deg)}}
+@keyframes lc_blink{0%,78%,100%{opacity:0}84%{opacity:1}92%{opacity:0}}
+@keyframes lc_mer{0%,100%{transform:scaleX(1)}50%{transform:scaleX(.2)}}
+@keyframes lc_draw2{0%,6%{stroke-dashoffset:1}30%,94%{stroke-dashoffset:0}100%{stroke-dashoffset:1}}
+@keyframes lc_okpop{0%,6%{transform:scale(0)}14%{transform:scale(1.35)}22%,92%{transform:scale(1)}100%{transform:scale(0)}}
+.lc-ring{transform-origin:50% 80%;animation:lc_ring 3.4s ease-in-out infinite}
+.lc-dr{stroke-dasharray:1;stroke-dashoffset:1;animation:lc_draw 4.5s ease-in-out infinite}
+.lc-rot{transform-origin:50% 50%;animation:lc_rot 4s linear infinite}
+.lc-door{transform-origin:0 50%;animation:lc_door 4s ease-in-out infinite}
+.lc-tilt{transform-origin:50% 12%;animation:lc_tilt 3.2s ease-in-out infinite}
+.lc-walk{animation:lc_walk 3.4s ease-in-out infinite}
+.lc-fly{animation:lc_fly 3.4s ease-in infinite}
+.lc-unlock{transform-origin:100% 100%;animation:lc_unlock 4s ease-in-out infinite}
+.lc-hit{transform-origin:50% 100%;animation:lc_hit 2.2s ease-in-out infinite}
+.lc-blink{animation:lc_blink 3s linear infinite}
+.lc-mer{transform-origin:50% 50%;animation:lc_mer 3.6s ease-in-out infinite}
+.rm .lc{display:inline-flex;flex:none;width:calc(24*var(--u));height:calc(24*var(--u))}
+.rm .lc svg{width:100%;height:100%;display:block;animation:none!important}
+.rm .rm-li .lc svg{font-size:inherit}
+.rm .rq{gap:calc(8*var(--u));animation:rj_in .7s both;animation-delay:calc(var(--i)*.14s + .2s)}
+.rm .rq .rq-t{flex:1}
+.rm .rq-ok{width:calc(15*var(--u));height:calc(15*var(--u));border-radius:50%;background:var(--ok);color:#fff;display:flex;align-items:center;justify-content:center;flex:none;animation:lc_okpop 6s ease-in-out infinite;animation-delay:calc(var(--i)*.9s)}
+.rm .rq-ok svg.i{font-size:calc(10*var(--u));color:#fff;animation:none;stroke-width:3}
+.rm .rm-g2 .rm-cd:first-child .rq{padding:calc(3.6*var(--u)) 0}
+.rm .rm-g2 .rm-cd:first-child .lc{width:calc(27*var(--u));height:calc(27*var(--u))}
+.rm .rm-g2 .rm-tl .tl-l{display:flex;align-items:center;gap:calc(6*var(--u))}
+.rm .rm-g2 .rm-tl .lc{width:calc(15*var(--u));height:calc(15*var(--u))}
+.rm .rm-g2 .rm-tl div{align-items:center;padding:calc(2*var(--u)) calc(7*var(--u))}
+.rm .rm-g2 .rm-cd.sal .lc{width:calc(15*var(--u));height:calc(15*var(--u))}
+.rm .rm-g2 .rm-cd.sal .rm-li{padding:calc(.9*var(--u)) 0}
+/* Hak integrasi: kartu bergaya jenis remisi */
+.rm .hi-c{align-items:center;text-align:center;border-top-color:var(--c,#2E6B3B);padding:calc(6*var(--u)) calc(7*var(--u));gap:calc(3*var(--u))}
+.rm .hi-ic{width:calc(50*var(--u));height:calc(50*var(--u));flex:none;animation:rj_in .7s both;animation-delay:calc(var(--i)*.14s + .15s)}
+.rm .hi-ic svg{width:100%;height:100%;display:block}
+.rm .hi-c h3{margin:0;font-size:calc(8.6*var(--u));line-height:1.12;color:var(--c,#2E6B3B);font-weight:700;text-transform:uppercase;min-height:calc(19*var(--u));display:flex;align-items:center;justify-content:center;animation:rj_in .6s both;animation-delay:calc(var(--i)*.14s)}
+.rm .hi-c p{margin:0;font-size:calc(8.5*var(--u));line-height:1.25;animation:rj_in .7s both;animation-delay:calc(var(--i)*.14s + .3s)}
+.rm .hi-c.q{align-items:stretch;text-align:left}
+.rm .hi-c.q h3{justify-content:flex-start;min-height:0}
+.rm .hi-ck svg path,.rm .hi-ck svg circle{stroke-dasharray:1;stroke-dashoffset:1;animation:lc_draw2 7s ease-in-out infinite}
+.rm .hi-ck:nth-of-type(2) svg *{animation-delay:.5s}.rm .hi-ck:nth-of-type(3) svg *{animation-delay:1s}
+@media (prefers-reduced-motion:reduce){.rm [class^="lc-"],.rm .rq,.rm .rq-ok,.rm .hi-ck svg *{animation:none!important}.rm .lc-dr,.rm .hi-ck svg *{stroke-dashoffset:0}}
 /* Notifikasi tamu sudah masuk (dari centang selesai P2U) */
 #masuk{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;background:#0009;backdrop-filter:blur(3px)}
 #masuk.on{display:flex;animation:mkIn .35s ease-out}
@@ -408,11 +500,12 @@ body.paused .paused-badge{display:inline-block}
 <div class="hint" id="hint">Klik layar sekali = suara aktif · F = layar penuh · Spasi = jeda · ← → = pindah slide · T = tema</div>
 <div id="gate"><form id="gf"><h1>Mode TV</h1><p>Masukkan kode akses (kode lihat) sekali saja. Kode diingat di browser ini.</p><input id="gk" type="password" autocomplete="off" placeholder="Kode akses"><div class="e" id="ge"></div><button>Tampilkan</button></form></div>
 
+<script src="config.js"></script>
 <script>
 (function () {
   'use strict';
-  // Alamat API Apps Script (sama dengan window.API_URL di index.html). Ubah di sini jika deployment diganti.
-  var API = 'https://script.google.com/macros/s/AKfycbz2Ji6knZXXHTr5a3bG1IfUPWEJFrZi64RBNHdWafWeYZOo3ygAt8QYaW75FZYhnq95Gg/exec';
+  // Alamat API Apps Script diambil dari config.js (dipakai bersama index.html).
+  var API = window.API_URL || '';
   var Q = new URLSearchParams(location.search);
   var DETIK = Math.max(5, parseInt(Q.get('detik'), 10) || 15);   // lama tiap slide
   var DBASE = DETIK, DUR2 = Math.max(5, parseInt(Q.get('detik2'), 10) || 7);   // slide Remisi dan sesudahnya: 7 detik
@@ -737,19 +830,80 @@ body.paused .paused-badge{display:inline-block}
     return s;
   }
   function remisiSyarat() {
-    var li = function (ic, t, d) { return '<div class="rm-li">' + I(ic).replace('<svg ', '<svg style="animation-delay:' + d + 's" ') + t + '</div>'; };
-    var ln = function (ic, t) { return '<div class="rm-li">' + I(ic, 'n') + t + '</div>'; };
+    var li = function (ic, t, d) { var k = d / .7; return '<div class="rm-li rq" style="--i:' + k + '"><span class="lc">' + LIC(ic) + '</span><span class="rq-t">' + t + '</span><span class="rq-ok" style="--i:' + k + '">' + I('ckc').replace(/<circle[^>]*\/>/, '') + '</span></div>'; };
+    var ln = function (ic, t) { return '<div class="rm-li"><span class="lc">' + LIC(ic) + '</span>' + t + '</div>'; };
+    var tl = function (ic, l, v) { return '<div><span class="tl-l"><span class="lc">' + LIC(ic) + '</span><b>' + l + '</b></span>' + v + '</div>'; };
     var mini = '<svg viewBox="0 0 66 40">' + P(22, KH, KC, 1).replace('<g class="rm-bob">', '<g class="rm-bob"><path d="M-6 14a6 6 0 0 1 12 0" stroke="#46576A" stroke-width="1.4" fill="none"/>') + '<g transform="translate(36,2)"><g class="rm-bub"><path d="M0 0h22a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3h-10l-5 5v-5H0a3 3 0 0 1-3-3V3a3 3 0 0 1 3-3z" fill="#fff" stroke="#46576A"/><circle cx="6" cy="7" r="1.3" fill="#46576A"/><circle cx="11.5" cy="7" r="1.3" fill="#46576A"/><circle cx="17" cy="7" r="1.3" fill="#46576A"/></g></g></svg>';
     var box = document.createElement('div'); box.className = 'rm-g2';
     box.innerHTML =
       '<div class="rm-cd" style="grid-row:span 2"><h2>' + I('list') + 'Persyaratan remisi</h2>' +
-      li('gavel', 'Narapidana dengan putusan berkekuatan hukum tetap', 0) + li('caltime', 'Telah menjalani pidana lebih dari 6 bulan', .7) + li('shield', 'Tidak dalam hukuman disiplin 6 bulan terakhir', 1.4) + li('school', 'Mengikuti program pembinaan, predikat baik', 2.1) + li('cert', 'Memenuhi syarat administratif dan substantif', 2.8) +
+      li('gavel', 'Narapidana dengan putusan berkekuatan hukum tetap', 0) + li('cal', 'Telah menjalani pidana lebih dari 6 bulan', .7) + li('shield', 'Tidak dalam hukuman disiplin 6 bulan terakhir', 1.4) + li('cap', 'Mengikuti program pembinaan, predikat baik', 2.1) + li('doc', 'Memenuhi syarat administratif dan substantif', 2.8) +
       '<div class="rm-note">' + I('info') + 'Tidak memenuhi syarat? Wajib diberi penjelasan alasannya.</div></div>' +
-      '<div class="rm-cd"><h2>' + I('clock') + 'Jangka waktu dan produk</h2><div class="rm-tl"><div><b>Pendataan, verifikasi</b>Sesuai jadwal</div><div><b>Usulan ke Ditjenpas</b>Sesuai kalender</div><div><b>SK Pemberian Remisi</b>Produk</div><div><b>Data hak di SDP</b>Diperbarui</div></div></div>' +
-      '<div class="rm-cd"><h2>' + I('report') + 'Saluran pengaduan</h2><div class="rm-mini">' + mini + '</div>' + ln('building', 'Datang langsung ke Lapas') + ln('phone', '<b>WhatsApp 0812-1254-2525</b>') + ln('insta', 'Instagram @lapassukamiskin') + ln('world', 'lapor.go.id · SMS 1708') + '</div>';
+      '<div class="rm-cd"><h2>' + I('clock') + 'Jangka waktu dan produk</h2><div class="rm-tl">' + tl('clock', 'Pendataan, verifikasi', 'Sesuai jadwal') + tl('send', 'Usulan ke Ditjenpas', 'Sesuai kalender') + tl('medal', 'SK Pemberian Remisi', 'Produk') + tl('sync', 'Data hak di SDP', 'Diperbarui') + '</div></div>' +
+      '<div class="rm-cd sal"><h2>' + I('report') + 'Saluran pengaduan</h2><div class="rm-mini">' + mini + '</div>' + ln('building', 'Datang langsung ke Lapas') + ln('phone', '<b>WhatsApp 0812-1254-2525</b>') + ln('insta', 'Instagram @lapassukamiskin') + ln('globe', 'lapor.go.id · SMS 1708') + '</div>';
     return h('div', { class: 'slide rm' }, stitle('Layanan Remisi', 'Syarat, jangka waktu, dan pengaduan · gratis, tanpa pungutan', '2/3'), box);
   }
 
+  /* ilustrasi kecil beranimasi (Layanan Remisi) */
+  function LIC(n) {
+    var o = '<svg viewBox="0 0 40 40" aria-hidden="true">', e = '</svg>', x = '';
+    var bg = function (c) { return '<circle cx="20" cy="20" r="19" fill="' + c + '"/>'; };
+    if (n === 'gavel') x = bg('#E3F0E4') + '<g class="lc-hit"><rect x="10" y="7" width="17" height="8" rx="2" fill="#2E6B3B"/><rect x="16" y="14" width="4.500" height="16" rx="2" fill="#8D5A2B"/></g><rect x="8" y="31" width="24" height="4" rx="2" fill="#8D5A2B"/>';
+    else if (n === 'cal') x = bg('#DCE8F6') + '<rect x="8" y="9" width="24" height="24" rx="3.500" fill="#fff" stroke="#2F6FB3" stroke-width="1.600"/><path d="M8 14a3.500 3.500 0 0 1 3.500-3.500h17A3.500 3.500 0 0 1 32 14v3H8Z" fill="#2F6FB3"/><rect x="13" y="6" width="3" height="7" rx="1.500" fill="#1F3A7A"/><rect x="24" y="6" width="3" height="7" rx="1.500" fill="#1F3A7A"/><path pathLength="1" class="lc-dr" d="M13 26l5 5 9-10" fill="none" stroke="#2E7D32" stroke-width="3.200" stroke-linecap="round" stroke-linejoin="round"/>';
+    else if (n === 'shield') x = bg('#E3F0E4') + '<g class="rj-bt2"><path d="M20 6L31 10V19Q31 28 20 34Q9 28 9 19V10Z" fill="#2E7D32"/></g><path pathLength="1" class="lc-dr" d="M14 20l4.500 4.500L27 15" fill="none" stroke="#fff" stroke-width="3.200" stroke-linecap="round" stroke-linejoin="round"/>';
+    else if (n === 'cap') x = bg('#EADFF5') + '<g class="rj-bb"><path d="M20 9L35 16 20 23 5 16Z" fill="#6A4BB0"/><path d="M11 20v7q9 5 18 0v-7L20 24Z" fill="#8A6FD0"/><path d="M33 17v10" stroke="#E0A800" stroke-width="1.600"/><circle cx="33" cy="28.500" r="2" fill="#E0A800"/></g>';
+    else if (n === 'doc') x = bg('#F7EACB') + '<rect x="10" y="6" width="20" height="28" rx="3" fill="#fff" stroke="#B88A0B" stroke-width="1.600"/><path pathLength="1" class="lc-dr" d="M14 13H26" stroke="#B88A0B" stroke-width="2" stroke-linecap="round" fill="none"/><path pathLength="1" class="lc-dr" style="animation-delay:.3s" d="M14 19H26" stroke="#B88A0B" stroke-width="2" stroke-linecap="round" fill="none"/><g class="rj-pp"><circle cx="27" cy="29" r="7" fill="#2E7D32" stroke="#fff" stroke-width="1.600"/><path d="M23.500 29l2.600 2.600 4.600-5.400" stroke="#fff" stroke-width="2.200" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>';
+    else if (n === 'clock') x = bg('#F7EACB') + '<circle cx="20" cy="20" r="12" fill="#fff" stroke="#B88A0B" stroke-width="2"/><path d="M20 12v8" stroke="#1E272D" stroke-width="2" stroke-linecap="round"/><g class="lc-rot" style="animation-duration:3s"><path d="M20 20V10" stroke="#B88A0B" stroke-width="2" stroke-linecap="round"/></g><circle cx="20" cy="20" r="1.800" fill="#1E272D"/>';
+    else if (n === 'send') x = bg('#DCE8F6') + '<g class="lc-fly"><path d="M8 20L32 9 25 31 19 23Z" fill="#2F6FB3"/><path d="M19 23L32 9" stroke="#fff" stroke-width="1.400"/></g><path d="M6 31h8M4 26h6" stroke="#9DBDE0" stroke-width="2" stroke-linecap="round"/>';
+    else if (n === 'medal') x = bg('#F7EACB') + '<path d="M13 5l5 11h4L27 5Z" fill="#D32F2F"/><g class="rj-bb"><circle cx="20" cy="24" r="9" fill="#E0A800" stroke="#B8860B" stroke-width="1.600"/><polygon points="20,18 22,22.500 27,23 23.300,26.200 24.300,31 20,28.500 15.700,31 16.700,26.200 13,23 18,22.500" fill="#fff"/></g>';
+    else if (n === 'sync') x = bg('#E3F0E4') + '<g class="lc-rot"><path d="M10 20a10 10 0 0 1 17-7" fill="none" stroke="#2E7D32" stroke-width="3" stroke-linecap="round"/><path d="M30 20a10 10 0 0 1-17 7" fill="none" stroke="#2E7D32" stroke-width="3" stroke-linecap="round"/><path d="M28 7v7h-7" fill="none" stroke="#2E7D32" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 33v-7h7" fill="none" stroke="#2E7D32" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></g>';
+    else if (n === 'building') x = bg('#DCE8F6') + '<path d="M6 17L20 7 34 17Z" fill="#46576A"/><rect x="9" y="17" width="22" height="16" fill="#fff" stroke="#46576A" stroke-width="1.600"/><rect x="16" y="22" width="8" height="11" fill="#FFE9A8"/><g class="lc-door"><rect x="16" y="22" width="8" height="11" fill="#8D5A2B"/></g>';
+    else if (n === 'phone') x = bg('#E3F0E4') + '<g class="lc-ring"><path d="M12 8h6l2 7-3.500 2a14 14 0 0 0 6.500 6.500L25 20l7 2v6a3 3 0 0 1-3 3A21 21 0 0 1 9 11a3 3 0 0 1 3-3Z" fill="#2E7D32"/></g><path d="M27 8q5 1 6 6M27 12q2.500.5 3 3" stroke="#2E7D32" stroke-width="1.600" fill="none" stroke-linecap="round" class="rj-tw"/>';
+    else if (n === 'insta') x = '<circle cx="20" cy="20" r="19" fill="#F7DDE6"/><rect x="8" y="8" width="24" height="24" rx="7" fill="none" stroke="#C2476B" stroke-width="2.600"/><circle cx="20" cy="20" r="6" fill="none" stroke="#C2476B" stroke-width="2.600"/><circle cx="27" cy="13" r="1.800" fill="#C2476B"/><circle cx="20" cy="20" r="6" fill="#fff" class="lc-blink"/>';
+    else x = bg('#DCE8F6') + '<circle cx="20" cy="20" r="12" fill="#fff" stroke="#2F6FB3" stroke-width="2"/><path d="M8 20h24M20 8v24" stroke="#9DBDE0" stroke-width="1.400"/><ellipse cx="20" cy="20" rx="6" ry="12" fill="none" stroke="#2F6FB3" stroke-width="1.600" class="lc-mer"/><path d="M10 14h20M10 26h20" stroke="#9DBDE0" stroke-width="1.200"/>';
+    return o + x + e;
+  }
+  /* ilustrasi besar beranimasi (Hak Integrasi) */
+  function HIA(n) {
+    var o = '<svg viewBox="0 0 100 100" aria-hidden="true">', e = '</svg>', x = '';
+    var bg = function (c) { return '<circle cx="50" cy="50" r="47" fill="' + c + '"/>'; };
+    var man = function (cx, cy, c, k) { return '<g class="' + (k || 'rj-bb') + '"><circle cx="' + cx + '" cy="' + (cy - 9) + '" r="5.500" fill="#F5CBA0"/><rect x="' + (cx - 6) + '" y="' + (cy - 3) + '" width="12" height="17" rx="5" fill="' + c + '"/></g>'; };
+    if (n === 0) { /* Remisi: surat dengan segel emas */
+      x = bg('#DCEDDD') + '<g class="rj-bb"><rect x="24" y="14" width="46" height="62" rx="5" fill="#fff" stroke="#2E7D32" stroke-width="2.600"/>' +
+        '<path pathLength="1" class="lc-dr" d="M32 28H62" stroke="#2E7D32" stroke-width="3" stroke-linecap="round" fill="none"/><path pathLength="1" class="lc-dr" style="animation-delay:.3s" d="M32 38H62" stroke="#2E7D32" stroke-width="3" stroke-linecap="round" fill="none"/><path pathLength="1" class="lc-dr" style="animation-delay:.6s" d="M32 48H52" stroke="#2E7D32" stroke-width="3" stroke-linecap="round" fill="none"/></g>' +
+        '<g class="rj-pp"><path d="M62 78l-4 14 9-5 5 7 2-15Z" fill="#D32F2F"/><circle cx="68" cy="68" r="14" fill="#E0A800" stroke="#B8860B" stroke-width="2.200"/><polygon points="68,58 71,65 79,66 73,71 75,79 68,75 61,79 63,71 57,66 65,65" fill="#fff"/></g>' +
+        '<circle cx="20" cy="22" r="1.800" fill="#FFD54F" class="rj-tw"/><circle cx="82" cy="30" r="1.600" fill="#FFD54F" class="rj-tw" style="animation-delay:1s"/>';
+    } else if (n === 1) { /* Asimilasi: dari jeruji menuju rumah */
+      x = bg('#D6E6F7') + '<path d="M6 76H94" stroke="#2F6FB3" stroke-width="3" stroke-linecap="round"/>' +
+        '<rect x="10" y="32" width="18" height="44" rx="2" fill="#8FA6BD"/><path d="M15 32V76M20 32V76M25 32V76" stroke="#46576A" stroke-width="2"/>' +
+        '<path d="M56 48L74 30 92 48Z" fill="#2F6FB3"/><rect x="60" y="48" width="28" height="28" fill="#fff" stroke="#2F6FB3" stroke-width="2"/><rect x="69" y="58" width="10" height="18" rx="1" fill="#FFE9A8" class="rj-gl"/>' +
+        '<g class="lc-walk">' + man(44, 66, '#1F3A7A', 'rj-bb') + '</g><g class="lc-walk" style="animation-delay:1.7s">' + man(36, 66, '#E07B1A', 'rj-bb') + '</g>';
+    } else if (n === 2) { /* Cuti keluarga: rumah dan hati */
+      x = bg('#F6DCE5') + '<path d="M22 50L50 26 78 50Z" fill="#C2476B"/><rect x="28" y="50" width="44" height="28" fill="#fff" stroke="#C2476B" stroke-width="2.200"/><rect x="45" y="60" width="10" height="18" rx="1" fill="#FFE9A8"/>' +
+        '<g class="rj-fu"><path d="M50 46C41 40 44 33 50 38 56 33 59 40 50 46Z" fill="#E53935"/></g><g class="rj-bt2"><path d="M50 42C39 35 43 27 50 33 57 27 61 35 50 42Z" fill="#E53935"/></g>' +
+        man(30, 84, '#1F3A7A') + man(70, 84, '#2E7D32') + '<g class="rj-bb" style="animation-delay:.3s"><circle cx="50" cy="82" r="4" fill="#F5CBA0"/><rect x="45" y="86" width="10" height="9" rx="4" fill="#E0A800"/></g>';
+    } else if (n === 3) { /* Cuti bersyarat: daftar persyaratan tercentang */
+      x = bg('#D9DEEF') + '<rect x="26" y="16" width="48" height="66" rx="6" fill="#fff" stroke="#1F3A7A" stroke-width="2.600"/><rect x="38" y="10" width="24" height="12" rx="4" fill="#1F3A7A"/>';
+      for (var k = 0; k < 3; k++) x += '<path pathLength="1" class="lc-dr" style="animation-delay:' + (k * .5).toFixed(1) + 's" d="M33 ' + (36 + k * 15) + 'l4 4 8-9" stroke="#2E7D32" stroke-width="3.400" fill="none" stroke-linecap="round" stroke-linejoin="round"/><rect x="52" y="' + (33 + k * 15) + '" width="16" height="5" rx="2.500" fill="#C6CEDC"/>';
+      x += '<g class="rj-pp"><circle cx="72" cy="76" r="11" fill="#E0A800" stroke="#fff" stroke-width="2"/><path d="M66.500 76l4 4 7-8" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>';
+    } else if (n === 4) { /* CMB: pintu terbuka, matahari terbit */
+      x = bg('#FBE3C4') + '<circle cx="76" cy="26" r="9" fill="#FFB300" class="rj-gl"/>' +
+        '<rect x="30" y="20" width="40" height="58" fill="#FFF3C4" stroke="#8D5A2B" stroke-width="3" class="rj-gl"/>' +
+        '<g class="lc-walk" style="animation-duration:4s">' + man(50, 70, '#8D5A2B', 'rj-bb') + '</g>' +
+        '<g class="lc-door"><rect x="30" y="20" width="40" height="58" fill="#8D5A2B" stroke="#5A3A18" stroke-width="2"/><rect x="36" y="28" width="28" height="18" rx="2" fill="#A06A38"/><circle cx="63" cy="52" r="2.800" fill="#E0A800"/></g>' +
+        '<path d="M16 80H84" stroke="#8D5A2B" stroke-width="3" stroke-linecap="round"/>';
+    } else if (n === 5) { /* PBB: gembok terbuka, burung terbang */
+      x = bg('#E4DAF3') + '<g class="lc-unlock"><path d="M37 50V38a13 13 0 0 1 26 0v12" fill="none" stroke="#9A86D6" stroke-width="7" stroke-linecap="round"/></g>' +
+        '<rect x="28" y="48" width="44" height="34" rx="7" fill="#6A4BB0"/><circle cx="50" cy="62" r="5" fill="#fff"/><rect x="48" y="63" width="4" height="10" rx="2" fill="#fff"/>' +
+        '<g class="lc-fly"><path d="M58 30q6-9 12 0q6-9 12 0" fill="none" stroke="#1F3A7A" stroke-width="3" stroke-linecap="round"/></g>' +
+        '<circle cx="18" cy="26" r="1.800" fill="#FFD54F" class="rj-tw"/><circle cx="84" cy="70" r="1.600" fill="#FFD54F" class="rj-tw" style="animation-delay:1s"/>';
+    } else { /* Hak lain: timbangan keadilan */
+      x = bg('#EDE1D2') + '<rect x="47" y="24" width="6" height="52" fill="#8D5A2B"/><rect x="32" y="74" width="36" height="7" rx="3.500" fill="#8D5A2B"/>' +
+        '<g class="lc-tilt"><rect x="14" y="24" width="72" height="5" rx="2.500" fill="#8D5A2B"/><path d="M20 29L11 54H29Z M80 29L71 54H89Z" fill="none" stroke="#8D5A2B" stroke-width="1.800"/><path d="M9 54Q20 66 31 54Z M69 54Q80 66 91 54Z" fill="#E0A800"/></g>' +
+        '<circle cx="50" cy="24" r="5" fill="#E0A800" stroke="#B8860B" stroke-width="1.600"/>';
+    }
+    return o + x + e;
+  }
   var RJ = [
     ['Remisi Umum', 'Diberikan pada peringatan Hari Proklamasi Kemerdekaan Republik Indonesia tanggal <b>17 Agustus</b>.', 'flag', '#1F3A7A'],
     ['Remisi Khusus', 'Diberikan pada hari besar keagamaan yang dianut oleh Narapidana.', 'moon', '#2E7D32'],
@@ -859,11 +1013,11 @@ body.paused .paused-badge{display:inline-block}
     return h('div', { class: 'slide rm' }, stitle('Hak Narapidana', 'Berdasarkan UU Nomor 22 Tahun 2022 tentang Pemasyarakatan', '1/3'), box);
   }
   function slideIntegrasi() {
-    var g = '';
+    var g = '', cols = ['#2E7D32', '#2F6FB3', '#C2476B', '#1F3A7A', '#E07B1A', '#6A4BB0', '#8D5A2B'];
     INT.forEach(function (t, i) {
-      g += '<div class="hi-c" style="animation-duration:' + DETIK + 's;animation-delay:' + (i * DETIK / 8).toFixed(2) + 's"><div class="hi-t"><span class="hi-i">' + I(t[2], ['rj-bb', 'rj-sh', 'rj-bt2', 'rj-sp'][i % 4]) + '</span><h3>' + t[0] + '</h3></div><p>' + t[1] + '</p></div>';
+      g += '<div class="hi-c" style="--c:' + cols[i] + ';--i:' + i + ';animation-duration:' + DETIK + 's;animation-delay:' + (i * DETIK / 8).toFixed(2) + 's"><div class="hi-ic">' + HIA(i) + '</div><h3>' + t[0] + '</h3><p>' + t[1] + '</p></div>';
     });
-    var ck = function (t) { return '<div class="hi-ck">' + I('ckc') + t + '</div>'; };
+    var ck = function (t) { return '<div class="hi-ck">' + I('ckc').replace(/<(path|circle) /g, '<$1 pathLength="1" ') + t + '</div>'; };
     g += '<div class="hi-c q" style="animation-duration:' + DETIK + 's;animation-delay:' + (7 * DETIK / 8).toFixed(2) + 's"><h3>Persyaratan umum</h3>' + ck('Berkelakuan baik') + ck('Aktif mengikuti program pembinaan') + ck('Menunjukkan penurunan tingkat risiko') + '</div>';
     var box = document.createElement('div'); box.className = 'hi-g'; box.innerHTML = g;
     return h('div', { class: 'slide rm' }, stitle('Hak Integrasi dan Pengurangan Masa Pidana', 'Hak Narapidana', '2/3'), box);
@@ -922,7 +1076,7 @@ body.paused .paused-badge{display:inline-block}
       '<div class="rm-note">' + I('info') + 'Penolakan hanya dalam keadaan tertentu (misalnya kondisi keamanan Lapas), disertai alasan tertulis.</div>' +
       '<div class="rm-note" style="background:var(--accentbg);color:var(--accent)">' + I('eye') + 'Pemeriksaan terhadap tersangka direkam kamera pengawas selama pemeriksaan berlangsung.</div></div>' +
       '<div class="rm-cd"><h2>' + I('clock') + 'Jangka waktu pelayanan</h2><div class="rm-tl pk-tl"><div><b>Keputusan Kepala Lapas</b>Maks. 1 hari kerja sejak surat lengkap</div><div><b>Pemeriksaan di luar Lapas</b>Maks. 24 jam, dengan surat izin Kepala Lapas</div><div><b>Pelaksanaan</b>Pada jam kerja, tidak dipungut biaya</div></div></div>' +
-      '<div class="rm-cd"><h2>' + I('report') + 'Saluran pengaduan</h2><div class="rm-mini">' + mini + '</div>' + ln('building', 'Datang langsung ke Lapas') + ln('phone', '<b>WhatsApp 0812-1254-2525</b>') + ln('insta', 'Instagram @lapassukamiskin') + ln('world', 'lapor.go.id · SMS 1708') + '</div>';
+      '<div class="rm-cd sal"><h2>' + I('report') + 'Saluran pengaduan</h2><div class="rm-mini">' + mini + '</div>' + ln('building', 'Datang langsung ke Lapas') + ln('phone', '<b>WhatsApp 0812-1254-2525</b>') + ln('insta', 'Instagram @lapassukamiskin') + ln('world', 'lapor.go.id · SMS 1708') + '</div>';
     return h('div', { class: 'slide rm' }, stitle('Layanan Pemeriksaan Narapidana', 'Persyaratan, jangka waktu, dan pengaduan · gratis, tanpa pungutan', '2/2'), box);
   }
 
@@ -1008,13 +1162,37 @@ body.paused .paused-badge{display:inline-block}
     var seen = {}, curKey = plan[idx] && plan[idx].key;
     plan.forEach(function (s) { if (seen[s.key]) return; seen[s.key] = 1; d.appendChild(h('span', { class: s.key === curKey ? 'on' : '', text: s.label })); });
   }
+  /* animasi masuk bertahap untuk kartu, baris, bar, dan angka */
+  var KURANG = false; try { KURANG = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+  function intro(n) {
+    if (KURANG || !n.animate) return;
+    var kartu = n.querySelectorAll('.rm-stp,.pk-c,.hi-c,.kw-c,.pq-c,.pq-st,.pq-cc,.rm-cd,.rj-in,.rj-bd>div,.pasti,.sk,.tile,.cols>.card,.mini>div');
+    Array.prototype.forEach.call(kartu, function (e, i) {
+      e.animate([{ opacity: 0, translate: '0 26px', scale: .93 }, { opacity: 1, translate: '0 0', scale: 1 }],
+        { duration: 700, delay: 150 + i * 80, easing: 'cubic-bezier(.2,.9,.3,1.15)', fill: 'backwards' });
+    });
+    Array.prototype.forEach.call(n.querySelectorAll('.row'), function (e, i) {
+      e.animate([{ opacity: 0, translate: '-40px 0' }, { opacity: e.classList.contains('done') ? .55 : 1, translate: '0 0' }],
+        { duration: 600, delay: 150 + i * 70, easing: 'cubic-bezier(.2,.9,.3,1)', fill: 'backwards' });
+    });
+    Array.prototype.forEach.call(n.querySelectorAll('.bar .tr i,.meter i'), function (e, i) {
+      e.style.transformOrigin = 'left center';
+      e.animate([{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }], { duration: 1000, delay: 350 + i * 70, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'backwards' });
+    });
+    Array.prototype.forEach.call(n.querySelectorAll('.tile b,.bar b,.mini b'), function (e, i) {
+      var t = String(e.textContent || ''); if (!/^\d+$/.test(t)) return;
+      var to = +t, t0 = null, dl = 300 + i * 60; e.textContent = '0';
+      function step(ts) { if (t0 == null) t0 = ts; var k = Math.min(1, Math.max(0, (ts - t0 - dl) / 900)); e.textContent = Math.round(to * (1 - Math.pow(1 - k, 3))); if (k < 1) requestAnimationFrame(step); else e.textContent = to; }
+      requestAnimationFrame(step);
+    });
+  }
   function show(i) {
     if (!plan.length) return;
     idx = (i + plan.length) % plan.length;
     DETIK = plan[idx].dur || DBASE;
     var st = document.getElementById('stage'), n = plan[idx].make(), old = cur;
     if (old) { old.classList.add('out'); setTimeout(function () { old.remove(); }, 450); }
-    st.appendChild(n); cur = n; drawDots();
+    st.appendChild(n); cur = n; drawDots(); intro(n);
     var pb = document.getElementById('pbar'); pb.classList.remove('run'); void pb.offsetWidth;
     pb.style.animationDuration = DETIK + 's'; pb.classList.add('run'); var ct = document.getElementById('cat'); ct.classList.remove('run'); void ct.offsetWidth; ct.style.animationDuration = DETIK + 's'; ct.classList.add('run');
     clearTimeout(timer);
