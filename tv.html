@@ -370,6 +370,26 @@ body.paused .paused-badge{display:inline-block}
 .rm .rm-g2 .rm-tl b{display:inline;white-space:nowrap}
 .rm .rm-g2{grid-template-rows:1.1fr 1fr}
 .rm .rm-g2 .rm-tl div{padding:calc(3*var(--u)) calc(7*var(--u))}
+/* Perapihan slide informasi: tinggi gambar seragam, tidak ada teks terpotong */
+.rm .rm-stp .rm-sc{height:calc(40*var(--u));flex:none}
+.rm .rm-stp .rm-sc svg{height:100%;width:100%}
+.rm .rm-stp .rm-hd{min-height:calc(17*var(--u))}
+.rm .rm-stp .rm-pill{margin-top:auto}
+.rm .rm-g2 .rm-cd:first-child{display:flex;flex-direction:column}
+.rm .rm-g2 .rm-cd:first-child .rm-li{padding:calc(5.5*var(--u)) 0}
+.rm .rm-g2 .rm-cd:first-child .rm-note{margin-top:auto}
+.rm .rm-g2{grid-template-rows:auto 1fr}
+.rm .rm-g2 .rm-cd.sal{padding-top:calc(6*var(--u));padding-bottom:calc(4*var(--u))}
+.rm .rm-g2 .rm-cd.sal .rm-li{padding:calc(1.6*var(--u)) 0}
+.rm .rm-g2 .rm-cd.sal h2{padding-right:calc(78*var(--u))}
+.rm .rm-g2 .rm-cd.sal .rm-mini{width:calc(62*var(--u));top:calc(3*var(--u))}
+.rm .rj-h{min-height:calc(21*var(--u))}
+.rm .rj-c p{font-size:calc(8*var(--u));line-height:1.25}
+.rm .hk-r p{font-size:calc(7.9*var(--u));line-height:1.2}
+.rm .hi-c.q{padding:calc(6*var(--u)) calc(9*var(--u));justify-content:center;gap:calc(1*var(--u))}
+.rm .hi-c.q h3{margin-bottom:calc(2*var(--u))}
+.rm .hi-t{min-height:calc(40*var(--u))}.rm .hi-t h3{font-size:calc(8.8*var(--u))}
+.rm .hi-ck{padding:calc(2.2*var(--u)) 0;font-size:calc(8.8*var(--u));line-height:1.2}
 /* Notifikasi tamu sudah masuk (dari centang selesai P2U) */
 #masuk{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;background:#0009;backdrop-filter:blur(3px)}
 #masuk.on{display:flex;animation:mkIn .35s ease-out}
@@ -747,7 +767,7 @@ body.paused .paused-badge{display:inline-block}
       li('gavel', 'Narapidana dengan putusan berkekuatan hukum tetap', 0) + li('caltime', 'Telah menjalani pidana lebih dari 6 bulan', .7) + li('shield', 'Tidak dalam hukuman disiplin 6 bulan terakhir', 1.4) + li('school', 'Mengikuti program pembinaan, predikat baik', 2.1) + li('cert', 'Memenuhi syarat administratif dan substantif', 2.8) +
       '<div class="rm-note">' + I('info') + 'Tidak memenuhi syarat? Wajib diberi penjelasan alasannya.</div></div>' +
       '<div class="rm-cd"><h2>' + I('clock') + 'Jangka waktu dan produk</h2><div class="rm-tl"><div><b>Pendataan, verifikasi</b>Sesuai jadwal</div><div><b>Usulan ke Ditjenpas</b>Sesuai kalender</div><div><b>SK Pemberian Remisi</b>Produk</div><div><b>Data hak di SDP</b>Diperbarui</div></div></div>' +
-      '<div class="rm-cd"><h2>' + I('report') + 'Saluran pengaduan</h2><div class="rm-mini">' + mini + '</div>' + ln('building', 'Datang langsung ke Lapas') + ln('phone', '<b>WhatsApp 0812-1254-2525</b>') + ln('insta', 'Instagram @lapassukamiskin') + ln('world', 'lapor.go.id · SMS 1708') + '</div>';
+      '<div class="rm-cd sal"><h2>' + I('report') + 'Saluran pengaduan</h2><div class="rm-mini">' + mini + '</div>' + ln('building', 'Datang langsung ke Lapas') + ln('phone', '<b>WhatsApp 0812-1254-2525</b>') + ln('insta', 'Instagram @lapassukamiskin') + ln('world', 'lapor.go.id · SMS 1708') + '</div>';
     return h('div', { class: 'slide rm' }, stitle('Layanan Remisi', 'Syarat, jangka waktu, dan pengaduan · gratis, tanpa pungutan', '2/3'), box);
   }
 
@@ -923,7 +943,7 @@ body.paused .paused-badge{display:inline-block}
       '<div class="rm-note">' + I('info') + 'Penolakan hanya dalam keadaan tertentu (misalnya kondisi keamanan Lapas), disertai alasan tertulis.</div>' +
       '<div class="rm-note" style="background:var(--accentbg);color:var(--accent)">' + I('eye') + 'Pemeriksaan terhadap tersangka direkam kamera pengawas selama pemeriksaan berlangsung.</div></div>' +
       '<div class="rm-cd"><h2>' + I('clock') + 'Jangka waktu pelayanan</h2><div class="rm-tl pk-tl"><div><b>Keputusan Kepala Lapas</b>Maks. 1 hari kerja sejak surat lengkap</div><div><b>Pemeriksaan di luar Lapas</b>Maks. 24 jam, dengan surat izin Kepala Lapas</div><div><b>Pelaksanaan</b>Pada jam kerja, tidak dipungut biaya</div></div></div>' +
-      '<div class="rm-cd"><h2>' + I('report') + 'Saluran pengaduan</h2><div class="rm-mini">' + mini + '</div>' + ln('building', 'Datang langsung ke Lapas') + ln('phone', '<b>WhatsApp 0812-1254-2525</b>') + ln('insta', 'Instagram @lapassukamiskin') + ln('world', 'lapor.go.id · SMS 1708') + '</div>';
+      '<div class="rm-cd sal"><h2>' + I('report') + 'Saluran pengaduan</h2><div class="rm-mini">' + mini + '</div>' + ln('building', 'Datang langsung ke Lapas') + ln('phone', '<b>WhatsApp 0812-1254-2525</b>') + ln('insta', 'Instagram @lapassukamiskin') + ln('world', 'lapor.go.id · SMS 1708') + '</div>';
     return h('div', { class: 'slide rm' }, stitle('Layanan Pemeriksaan Narapidana', 'Persyaratan, jangka waktu, dan pengaduan · gratis, tanpa pungutan', '2/2'), box);
   }
 

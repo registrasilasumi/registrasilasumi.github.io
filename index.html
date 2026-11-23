@@ -59,6 +59,7 @@ header{min-height:190px;padding:20px 0;display:flex;align-items:center}
 h1{font-size:19px;font-weight:600;margin:0;text-wrap:balance}
 .sub{color:var(--ink2);font-size:13px}
 .fresh{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.sep{margin:16px 0 4px;font-size:13px;font-weight:600;color:var(--ink2)}
 .chip{font-size:12px;color:var(--ink2);border:1px solid var(--line);border-radius:6px;padding:2px 8px;background:var(--panel)}
 nav{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;flex:1;min-width:0}
 .navrow{display:flex;align-items:center;gap:12px}
@@ -140,6 +141,7 @@ textarea{width:100%;min-height:150px;font-family:var(--mono);font-size:12px}
 .pill[aria-pressed="true"]{background:var(--accentbg);border-color:var(--accent);color:var(--accent)}
 .empty{padding:20px;text-align:center;color:var(--ink2)}
 .empty b{display:block;color:var(--ink);font-weight:500;margin-bottom:2px}
+.usub{padding:12px 0;border-top:1px solid var(--line)}.bar2+.usub{border-top:0;padding-top:4px}.usub p{margin:2px 0 8px;color:var(--ink2)}
 .step{display:grid;grid-template-columns:28px 1fr;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
 .step:first-of-type{border-top:0}
 .step .n{width:24px;height:24px;border-radius:50%;background:var(--accentbg);color:var(--accent);display:grid;place-items:center;font-size:12px;font-weight:500}
@@ -174,6 +176,17 @@ details>summary{cursor:pointer;color:var(--ink2);padding:6px 0}
   nav{order:2;flex:1 0 100%;flex-wrap:wrap;overflow:visible}
   nav button{padding:8px 11px;min-height:40px;font-size:14px}
   .navrow>button.btn{min-height:38px;padding:6px 12px}
+  /* tabel jadwal jadi kartu per baris di HP */
+  table.stk,.stk tbody{display:block}
+  .stk thead{display:none}
+  .stk tr{display:block;padding:10px 0;border-bottom:1px solid var(--line)}
+  .stk td{display:block;border:0!important;padding:2px 0!important;background:none!important}
+  .stk td.hm,.stk td:empty{display:none}
+  .stk td[data-lb]::before{content:attr(data-lb);display:block;font-size:11px;color:var(--ink3);margin-top:6px}
+  .stk td.ns[data-lb]{display:flex;align-items:center;gap:10px;margin-top:6px}
+  .stk td.ns[data-lb]::before{display:inline;margin:0}
+  .stk td.rs{max-width:none;min-width:0}
+  .bar2 select{max-width:100%}
 }
 @media print{
   :root,:root[data-theme="dark"]{--bg:#fff;--panel:#fff;--top:#fff;--ink:#000;--ink2:#333;--ink3:#555;--line:#999;--accent:#222;--accentbg:#eee;color-scheme:light}
@@ -872,12 +885,12 @@ window.PEMBACA_URL = 'https://claude.ai/artifact/CVCErEk8gzB9wXBQWebYny';
         h('span', { text: i.v }));
     });
   }
-  function table(cols, rows, rc) {
+  function table(cols, rows, rc, stack) {
     cols = cols.filter(function (c) { return !(c.c === 'ns' && !wr()); });
-    var t = h('table', null, h('thead', null, h('tr', null, cols.map(function (c) { return h('th', { text: c.h, class: (c.hm ? 'hm ' : '') + (c.c === 'ns' ? 'ns' : '') }); }))));
+    var t = h('table', stack ? { class: 'stk' } : null, h('thead', null, h('tr', null, cols.map(function (c) { return h('th', { text: c.h, class: (c.hm ? 'hm ' : '') + (c.c === 'ns' ? 'ns' : '') }); }))));
     var tb = h('tbody');
     rows.forEach(function (r) {
-      tb.append(h('tr', { class: rc ? rc(r) : '' }, cols.map(function (c) { return h('td', { class: (c.c || '') + (c.hm ? ' hm' : '') }, c.f(r)); })));
+      tb.append(h('tr', { class: rc ? rc(r) : '' }, cols.map(function (c) { return h('td', { class: (c.c || '') + (c.hm ? ' hm' : ''), 'data-lb': c.lb || null }, c.f(r)); })));
     });
     t.append(tb);
     return h('div', { class: 'tw' }, t);
@@ -1380,7 +1393,7 @@ function bukaLepas(e) {
     add(root, h('div', { class: 'card' }, h('h2', { text: 'Agenda ' + P.tglID(D, true), style: 'margin:0' })));
     function pill(t, k) { return h('button', { class: 'pill', 'aria-pressed': f === k ? 'true' : 'false', onclick: function () { ui.agj = k; render(); } }, t); }
     var cnt = function (k) { return hari.filter(function (a) { return !k || a.k === k; }).length; };
-    var tampil = hari.filter(function (a) { return !f || a.k === f; }).sort(function (a, b) { return (a.jam || '99').localeCompare(b.jam || '99'); });
+    var tampil = hari.filter(function (a) { return !f || a.k === f; }).sort(function (a, b) { return (!!a.done - !!b.done) || (a.jam || '99').localeCompare(b.jam || '99'); });
     add(root, h('div', { class: 'card' }, h('div', { class: 'bar2' }, pill('Semua ' + cnt(''), ''), pill('Sidang ' + cnt('sidang'), 'sidang'), pill('Pemeriksaan ' + cnt('periksa'), 'periksa'), pill('Mutasi ' + cnt('mutasi'), 'mutasi'), pill('Penagihan UP ' + cnt('tagih'), 'tagih'))));
     var cols = [
       { h: 'Jam', c: 'mono', f: function (a) { return a.jam ? a.jam.replace(':', '.') : ''; } },
@@ -1449,15 +1462,17 @@ function bukaLepas(e) {
     var T = today(), all = S.events.filter(function (e) { return e.tipe === tipe; });
     var label = tipe === 'sidang' ? 'sidang' : 'pemeriksaan';
     var cols = [
-      { h: 'Tanggal', f: function (e) { return [P.tglID(e.tgl), h('div', { class: 'faint', text: (e.jam ? e.jam.replace(':', '.') + ' WIB · ' : '') + when(e.tgl) })]; } },
-      { h: 'Nama', f: function (e) { return who(e).nama; } },
-      { h: 'Register', c: 'mono', hm: true, f: function (e) { return e.noreg ? reg(e.noreg) : badge('Belum dicocokkan', 'warn'); } },
-      { h: 'Blok', hm: true, f: function (e) { return who(e).blok; } },
-      { h: tipe === 'sidang' ? 'Pengadilan' : 'Instansi', f: function (e) { return e.instansi || ''; } },
-      { h: 'Jenis', hm: true, f: function (e) { return e.mode && e.mode !== 'tidak disebut' ? badge(e.mode === 'online' ? 'Online' : 'Tatap muka', e.mode === 'online' ? 'blue' : 'gold') : ''; } },
+      { h: 'Tanggal', f: function (e) { return [h('b', { text: P.tglID(e.tgl) }), h('div', { class: 'faint', text: (e.jam ? e.jam.replace(':', '.') + ' WIB' : '') + (!e.done && e.tgl ? (e.jam ? ' · ' : '') + when(e.tgl) : '') })]; } },
+      { h: 'Nama', f: function (e) {
+        var w = who(e), sub = [e.noreg ? reg(e.noreg) : '', w.blok || ''].filter(Boolean).join(' · ');
+        return [w.nama, sub ? h('div', { class: 'faint', text: sub }) : (e.noreg ? null : badge('Belum dicocokkan', 'warn'))];
+      } },
+      { h: tipe === 'sidang' ? 'Pengadilan' : 'Instansi', f: function (e) {
+        return [e.instansi || '', e.mode && e.mode !== 'tidak disebut' ? h('div', null, badge(e.mode === 'online' ? 'Online' : 'Tatap muka', e.mode === 'online' ? 'blue' : 'gold')) : null];
+      } },
       { h: 'Surat', c: 'mono', hm: true, f: function (e) { return e.surat || ''; } },
-      tipe === 'periksa' ? { h: 'Resume hasil pemeriksaan', c: 'rs', f: resumeCell } : null,
-      { h: 'Sudah dilaksanakan', c: 'ns', f: function (e) {
+      tipe === 'periksa' ? { h: 'Resume hasil pemeriksaan', c: 'rs', lb: 'Resume', f: resumeCell } : null,
+      { h: 'Selesai', c: 'ns', lb: 'Sudah dilaksanakan', f: function (e) {
         var ck = h('input', { type: 'checkbox', checked: !!e.done, disabled: !canDone(), 'aria-label': 'Sudah dilaksanakan: ' + who(e).nama, onchange: function () {
           S.db.doc('events/' + e.id).update({ done: ck.checked, done_at: ck.checked ? new Date().toISOString() : '' }).catch(function (er) { ck.checked = !ck.checked; banner('Gagal menyimpan: ' + errText(er), 'bad'); });
         } });
@@ -1487,19 +1502,19 @@ function bukaLepas(e) {
     var sel = h('select', { 'aria-label': 'Bulan', onchange: function () { ui[kb] = sel.value; ui[ki] = ''; render(); } },
       ml.map(function (m) { return h('option', { value: m, text: P.BULAN[+m.slice(5) - 1] + ' ' + m.slice(0, 4) }); }));
     sel.value = ui[kb];
-    function pill(t, k) { return h('button', { class: 'pill', 'aria-pressed': ui[ki] === k ? 'true' : 'false', onclick: function () { ui[ki] = k; render(); } }, t); }
-    var bar = h('div', { class: 'bar2' }, sel, pill('Semua ' + rows.length, ''),
-      Object.keys(ins).sort().map(function (k) { return pill(k + ' ' + ins[k], k); }));
-    var rekap = [
-      ['Jadwal ' + label + ' bulan ini', rows.length],
-      ['Orang', Object.keys(orang).length],
-      ['Sudah dilaksanakan', sudah],
-      ['Belum dilaksanakan', rows.length - sudah]
-    ];
-    if (tipe === 'periksa') rekap.push(['Resume sudah diisi', rows.filter(function (e) { return e.resume; }).length]);
-    add(root, h('div', { class: 'card' }, h('h2', { text: 'Rekap ' + label + ' ' + P.BULAN[+ui[kb].slice(5) - 1] + ' ' + ui[kb].slice(0, 4) }), bar,
-      h('div', { class: 'note', style: 'margin:8px 0', text: rekap.map(function (r) { return r[0] + ': ' + r[1]; }).join(' · ') }),
-      shown.length ? table(cols, shown, rc) : empty('Tidak ada jadwal ' + label)));
+    var sin = h('select', { 'aria-label': 'Filter ' + (tipe === 'sidang' ? 'pengadilan' : 'instansi'), onchange: function () { ui[ki] = sin.value; render(); } },
+      h('option', { value: '', text: 'Semua ' + (tipe === 'sidang' ? 'pengadilan' : 'instansi') + ' (' + rows.length + ')' }),
+      Object.keys(ins).sort().map(function (k) { return h('option', { value: k, text: k + ' (' + ins[k] + ')' }); }));
+    sin.value = ui[ki] || '';
+    var chips = [rows.length + ' jadwal', Object.keys(orang).length + ' orang', (rows.length - sudah) + ' belum', sudah + ' selesai'];
+    if (tipe === 'periksa') chips.push(rows.filter(function (e) { return e.resume; }).length + ' resume');
+    var bar = h('div', { class: 'bar2' }, sel, sin, chips.map(function (c) { return h('span', { class: 'chip', text: c }); }));
+    /* yang belum dilaksanakan di atas (terdekat dulu), yang sudah di bawah (terbaru dulu) */
+    var belum = shown.filter(function (e) { return !e.done; }), selesai = shown.filter(function (e) { return e.done; }).reverse();
+    add(root, h('div', { class: 'card' }, bar,
+      belum.length ? table(cols, belum, rc, true) : (shown.length ? h('div', { class: 'note', text: 'Semua jadwal ' + label + ' pada pilihan ini sudah dilaksanakan.' }) : empty('Tidak ada jadwal ' + label)),
+      selesai.length ? h('div', { class: 'sep', text: 'Sudah dilaksanakan · ' + selesai.length }) : null,
+      selesai.length ? table(cols, selesai, rc, true) : null));
     if (tipe === 'periksa') add(root, vRiwayatResume());
     return root;
   }
@@ -1880,14 +1895,27 @@ function bukaLepas(e) {
   function vUnggah() {
     var root = h('div');
     if (!wr()) add(root, h('div', { class: 'msg warn', text: 'Akun Anda hanya bisa melihat. Unggah dan ubah data dinonaktifkan.' }));
+    var groups = [
+      { k: 'lap', t: 'Laporan', subs: [
+        ['Laporan harian', 'Tempel teks laporan dari WA. Angka, rincian, dan nama yang di luar terbaca otomatis.', stLaporan],
+        ['Susulan: WBP keluar setelah laporan pagi', 'Tempel daftar yang keluar setelah laporan pagi. Jumlah di dalam dan di luar ikut diperbarui. Hasilnya Anda cek dulu.', stSusulan],
+        ['Laporan atensi (WBP baru)', 'Tempel Laporan Atensi Pimpinan tentang penerimaan terpidana, boleh beberapa sekaligus. Anda cek dulu sebelum disimpan.', stMasuk]
+      ] },
+      { k: 'surat', t: 'Surat dan jadwal', subs: [
+        ['Surat panggilan dan mutasi', 'PDF atau foto. Sidang, pemeriksaan, atau mutasi ditentukan dari isi surat. Hasilnya Anda cek dulu.', stSurat],
+        ['Penagihan UP dari instansi', 'Tempel chat dari Kejaksaan, KPK, dan lainnya. Jam dan petugas terbaca otomatis; instansi dan nama WBP Anda lengkapi. Masuk ke Agenda.', stTagih]
+      ] },
+      { k: 'data', t: 'Data SDP dan bebas', subs: [
+        ['Excel dari SDP', 'Menimpa daftar penghuni. Penghuni baru dan yang sudah tidak ada dilaporkan sebelum disimpan.', stExcel],
+        ['Foto papan bebas', 'Foto papan Daftar Narapidana Bebas. Tanggal bebas hanya diambil dari foto ini.', stBebas]
+      ] }
+    ];
+    if (!ui.upg || !groups.some(function (g) { return g.k === ui.upg; })) ui.upg = 'lap';
+    var cur = groups.filter(function (g) { return g.k === ui.upg; })[0];
     add(root, h('div', { class: 'card' },
-      step(1, 'Excel dari SDP', 'Menimpa daftar penghuni. Penghuni baru dan yang sudah tidak ada akan dilaporkan sebelum disimpan.', stExcel()),
-      step(2, 'Laporan harian', 'Tempel teks laporan dari WA. Angka, rincian, dan nama yang di luar terbaca otomatis.', h('div', null, stLaporan(), h('div', { style: 'border-top:1px solid var(--line);margin-top:16px;padding-top:12px' }, h('b', { text: 'Susulan: WBP keluar setelah laporan pagi' }), h('p', { text: 'Tempel daftar WBP yang keluar setelah laporan harian pagi dibuat (sidang, berobat, bebas, dipindah, dan lainnya). Jumlah di dalam dan di luar pada laporan hari itu ikut diperbarui. Hasilnya Anda cek dulu.' }), stSusulan()))),
-      step(3, 'Surat panggilan, mutasi, dan penagihan UP', 'PDF atau foto. Sidang, pemeriksaan, atau rencana mutasi (pemindahan masuk atau keluar) ditentukan dari isi surat. Dibaca oleh Claude, hasilnya Anda cek dulu.', h('div', null, stSurat(), h('div', { style: 'border-top:1px solid var(--line);margin-top:16px;padding-top:12px' }, h('b', { text: 'Penagihan UP dari instansi (Kejaksaan, KPK, dan lainnya)' }), h('p', { text: 'Tempel chat koordinasi dari instansi. Jam, tanggal, dan petugas yang ditemui terbaca otomatis. Instansi dan nama WBP yang ditagih Anda lengkapi (nama dipilih dari daftar penghuni). Jadwalnya masuk ke Agenda sehingga P2U bisa mencentang saat tamu tiba.' }), stTagih()))),
-      step(4, 'Foto papan bebas', 'Foto papan Daftar Narapidana Bebas. Tanggal bebas hanya diambil dari foto ini.', stBebas()),
-      step(5, 'Laporan atensi (WBP baru)', 'Tempel teks Laporan Atensi Pimpinan tentang penerimaan terpidana. Boleh beberapa laporan sekaligus. Hasilnya Anda cek dulu sebelum disimpan.', stMasuk())));
+      h('div', { class: 'bar2' }, groups.map(function (g) { return h('button', { class: 'pill', 'aria-pressed': g.k === ui.upg ? 'true' : 'false', onclick: function () { ui.upg = g.k; render(); } }, g.t); })),
+      cur.subs.map(function (x) { return h('div', { class: 'usub' }, h('b', { text: x[0] }), h('p', { text: x[1] }), x[2]()); })));
     return root;
-    function step(n, t, d, body) { return h('div', { class: 'step' }, h('div', { class: 'n', text: n }), h('div', null, h('b', { text: t }), h('p', { text: d }), body)); }
   }
   function pick(id, accept, multiple, onFiles, label) {
     var inp = h('input', { type: 'file', id: id, accept: accept, multiple: multiple, style: 'position:absolute;left:-9999px', disabled: !wr(), onchange: function () { if (inp.files.length) onFiles(Array.prototype.slice.call(inp.files)); inp.value = ''; } });
