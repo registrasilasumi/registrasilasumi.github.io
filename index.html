@@ -566,9 +566,20 @@ window.PEMBACA_URL = 'https://claude.ai/artifact/CVCErEk8gzB9wXBQWebYny';
   };
   Store.login = Store.loginKode;
   Store.logout = async function () { ls('kode', null); kode = ''; role = ''; };
-  Store.email = function () { return role === 'editor' ? 'Kode editor' : 'Kode lihat saja'; };
+  Store.email = function () { return role === 'editor' ? 'Kode editor' : role === 'sidang' ? 'Kode agenda sidang' : 'Kode lihat saja'; };
   Store.canWrite = function () { return role === 'editor'; };
   Store.p2u = function () { return role === 'p2u'; };
+  Store.sidangOnly = function () { return role === 'sidang'; };
+  /* Surat panggilan sidang: berkas dipecah jadi potongan base64 dan disimpan di server (op 'suratput' dan 'suratget') */
+  Store.suratPut = async function (id, blob, onProgress) {
+    var b64 = await toB64(blob), SZ = 40000, total = Math.max(1, Math.ceil(b64.length / SZ));
+    if (total > 60) throw err('invalid_argument', 'Berkas terlalu besar. Kecilkan dulu, maksimal sekitar 1,7 MB.');
+    for (var i = 0; i < total; i++) {
+      await rpc('suratput', { id: id, idx: i, total: total, b64: b64.slice(i * SZ, (i + 1) * SZ) });
+      if (onProgress) onProgress(i + 1, total);
+    }
+  };
+  Store.suratGet = async function (id) { var r = await rpc('suratget', { id: id }); return r.b64 || ''; };
   var fotoP = null;
   /* Kirim jawaban ke Google Form lewat server (Kode.gs op 'kirimform'), supaya balasan Google bisa dibaca. */
   Store.kirimForm = function (form, fields, hal) { return rpc('kirimform', { form: form, fields: fields, hal: hal }); };
@@ -831,10 +842,11 @@ window.PEMBACA_URL = 'https://claude.ai/artifact/CVCErEk8gzB9wXBQWebYny';
     if (L) f.append(h('span', { class: 'chip', text: 'Laporan ' + P.tglID(L.tgl) + (L.jam ? ', ' + L.jam.replace(':', '.') : '') }));
     if (S.meta) f.append(h('span', { class: 'chip', text: 'Excel SDP ' + fmtAt(S.meta.at) }));
   }
-  function visTabs() { if (p2u()) return TABS.filter(function (t) { return t[0] === 'agenda'; }); return TABS.filter(function (t) { return (t[0] !== 'unggah' && t[0] !== 'laporan' && t[0] !== 'kirim') || wr(); }); }
+  function sdgOnly() { return !!(window.Store && window.Store.sidangOnly && window.Store.sidangOnly()); }
+  function visTabs() { if (p2u()) return TABS.filter(function (t) { return t[0] === 'agenda'; }); if (sdgOnly()) return TABS.filter(function (t) { return t[0] === 'sidang'; }); return TABS.filter(function (t) { return (t[0] !== 'unggah' && t[0] !== 'laporan' && t[0] !== 'kirim') || wr(); }); }
   function nav() {
     var n = clear(document.getElementById('nav'));
-    if (p2u()) { n.append(h('button', { role: 'tab', 'aria-selected': 'true' }, 'Agenda')); var bb = document.getElementById('bnav'); if (bb) bb.hidden = true; return; }
+    if (p2u() || sdgOnly()) { n.append(h('button', { role: 'tab', 'aria-selected': 'true' }, p2u() ? 'Agenda' : 'Agenda sidang')); var bb = document.getElementById('bnav'); if (bb) bb.hidden = true; return; }
     var vis = visTabs(), utama = BOTTOM.map(function (k) { return vis.filter(function (t) { return t[0] === k; })[0]; }).filter(Boolean);
     var sisa = vis.filter(function (t) { return BOTTOM.indexOf(t[0]) < 0; });
     utama.forEach(function (t) {
@@ -1460,6 +1472,19 @@ function bukaLepas(e) {
   }
 
   /* ---------- Sidang / Pemeriksaan ---------- */
+  function suratCell(e) {
+    if (!e.sf) return h('span', { class: 'faint', text: 'Belum ada surat' });
+    var b = h('button', { class: 'btn', type: 'button', text: 'Unduh surat panggilan', onclick: function () {
+      b.disabled = true; b.textContent = 'Mengunduh…';
+      window.Store.suratGet(e.id).then(function (b64) {
+        var bin = atob(b64), u = new Uint8Array(bin.length);
+        for (var i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+        var a = h('a', { href: URL.createObjectURL(new Blob([u], { type: e.sf.mime || 'application/octet-stream' })), download: e.sf.nama || ('surat-panggilan-' + e.id) });
+        document.body.appendChild(a); a.click(); a.remove();
+      }).catch(function (er) { banner('Gagal mengunduh surat: ' + errText(er), 'bad'); }).then(function () { b.disabled = false; b.textContent = 'Unduh surat panggilan'; });
+    } });
+    return b;
+  }
   function vJadwal(tipe) {
     var T = today(), all = S.events.filter(function (e) { return e.tipe === tipe; });
     var label = tipe === 'sidang' ? 'sidang' : 'pemeriksaan';
@@ -1467,7 +1492,7 @@ function bukaLepas(e) {
       { h: 'Tanggal', f: function (e) { return [h('b', { text: P.tglID(e.tgl) }), h('div', { class: 'faint', text: (e.jam ? e.jam.replace(':', '.') + ' WIB' : '') + (!e.done && e.tgl ? (e.jam ? ' · ' : '') + when(e.tgl) : '') })]; } },
       { h: 'Nama', f: function (e) {
         var w = who(e), sub = [e.noreg ? reg(e.noreg) : '', w.blok || ''].filter(Boolean).join(' · ');
-        return [w.nama, sub ? h('div', { class: 'faint', text: sub }) : (e.noreg ? null : badge('Belum dicocokkan', 'warn'))];
+        return [w.nama, sub ? h('div', { class: 'faint', text: sub }) : (e.noreg || sdgOnly() ? null : badge('Belum dicocokkan', 'warn'))];
       } },
       { h: tipe === 'sidang' ? 'Pengadilan' : 'Instansi', f: function (e) {
         return [e.instansi || '', e.mode && e.mode !== 'tidak disebut' ? h('div', null, badge(e.mode === 'online' ? 'Online' : 'Tatap muka', e.mode === 'online' ? 'blue' : 'gold')) : null];
@@ -1480,7 +1505,7 @@ function bukaLepas(e) {
         } });
         return ck;
       } },
-      tipe === 'sidang' && wr() ? { h: 'Berkas', c: 'ns', f: function (e) { return e.mode === 'online' ? h('span', { class: 'faint', text: 'Online' }) : h('button', { class: 'btn', type: 'button', text: 'Cetak berkas', onclick: function () { bukaCetak(e); } }); } } : null,
+      tipe === 'sidang' ? { h: 'Surat panggilan', c: 'sp', lb: 'Surat panggilan', f: suratCell } : null,
       { h: '', c: 'ns', hm: true, f: delBtn }
     ].filter(Boolean);
     var rc = function (e) { return e.done ? 'done' : ''; };
@@ -1633,7 +1658,6 @@ function bukaLepas(e) {
         } });
         return ck;
       } },
-      wr() ? { h: 'Berkas', c: 'ns', f: function (e) { return e.ket === 'Pindah golongan' ? '' : h('button', { class: 'btn', type: 'button', text: 'Surat lepas', onclick: function () { bukaLepas(e); } }); } } : null,
       { h: '', c: 'ns', hm: true, f: delBtn }
     ].filter(Boolean);
     add(root, h('div', { class: 'card' }, bar, shown.length ? table(cols, shown, function (e) { return e.done ? 'done' : ''; }) : empty('Tidak ada data'),
@@ -2047,6 +2071,7 @@ function bukaLepas(e) {
       ] },
       { k: 'surat', t: 'Surat dan jadwal', subs: [
         ['Surat panggilan dan mutasi', 'PDF atau foto. Sidang, pemeriksaan, atau mutasi ditentukan dari isi surat. Hasilnya Anda cek dulu.', stSurat],
+        ['Berkas surat panggilan sidang', 'Unggah PDF atau foto surat panggilannya supaya bisa diunduh dari menu Sidang. Pilih jadwal sidangnya dulu.', stBerkasSurat],
         ['Penagihan UP dari instansi', 'Tempel chat dari Kejaksaan, KPK, dan lainnya. Jam dan petugas terbaca otomatis; instansi dan nama WBP Anda lengkapi. Masuk ke Agenda.', stTagih]
       ] },
       { k: 'data', t: 'Data SDP dan bebas', subs: [
@@ -2450,6 +2475,32 @@ function bukaLepas(e) {
     return box;
   }
 
+  /* Berkas surat panggilan sidang (untuk diunduh dari menu Sidang) */
+  function stBerkasSurat() {
+    var st = ui.up.bs || {}, box = h('div'), T = today();
+    var list = S.events.filter(function (e) { return e.tipe === 'sidang'; }).sort(function (a, b) { return sortEv(b, a); });
+    if (!list.length) { add(box, h('div', { class: 'note', text: 'Belum ada jadwal sidang. Simpan jadwalnya dulu lewat Surat panggilan dan mutasi.' })); return box; }
+    var sel = h('select', { 'aria-label': 'Jadwal sidang', style: 'max-width:100%', disabled: !wr(), onchange: function () { ui.up.bs = Object.assign(ui.up.bs || {}, { id: sel.value, msg: '' }); drawUp(); } },
+      h('option', { value: '', text: 'Pilih jadwal sidang' }),
+      list.map(function (e) { return h('option', { value: e.id, text: P.tglID(e.tgl) + ' · ' + who(e).nama + (e.instansi ? ' · ' + e.instansi : '') + (e.sf ? ' (sudah ada surat)' : '') }); }));
+    sel.value = st.id && list.some(function (e) { return e.id === st.id; }) ? st.id : '';
+    add(box, h('div', { style: 'margin-bottom:8px' }, sel));
+    if (sel.value) add(box, pick('f-bs', '.pdf,image/*,.heic,.heif', false, function (fs) { simpanBerkasSurat(sel.value, fs[0]); }, st.busy ? 'Mengunggah…' : 'Pilih surat (PDF atau foto)'));
+    add(box, status(st));
+    return box;
+  }
+  async function simpanBerkasSurat(id, f) {
+    setU('bs', { id: id, busy: true, msg: 'Menyiapkan berkas…', kind: '' });
+    try {
+      var isPdf = /pdf/i.test(f.type) || /\.pdf$/i.test(f.name), blob = f, nama = f.name, mime = f.type || 'application/octet-stream';
+      if (isPdf) { mime = 'application/pdf'; if (f.size > 1700000) throw new Error('PDF terlalu besar (maksimal sekitar 1,7 MB). Kecilkan dulu atau unggah sebagai foto.'); }
+      else { blob = await toJpeg(f); mime = 'image/jpeg'; nama = f.name.replace(/\.[^.]+$/, '') + '.jpg'; }
+      await window.Store.suratPut(id, blob, function (i, n) { setU('bs', { msg: 'Mengunggah ' + i + ' dari ' + n + '…' }); });
+      await S.db.doc('events/' + id).update({ sf: { nama: nama, mime: mime, at: new Date().toISOString() } });
+      setU('bs', { id: '', busy: false, msg: 'Surat panggilan tersimpan. Sekarang bisa diunduh dari menu Sidang.', kind: 'ok' });
+    } catch (e) { setU('bs', { busy: false, msg: errText(e), kind: 'bad' }); }
+  }
+
   /* Surat panggilan */
   function stSurat() {
     var st = ui.up.sr || {}, box = h('div');
@@ -2627,6 +2678,7 @@ function bukaLepas(e) {
     if (!(S.loaded.master && S.loaded.events && S.loaded.lap)) return;
     var v;
     if (p2u()) ui.tab = 'agenda';
+    if (sdgOnly()) ui.tab = 'sidang';
     try {
       v = ui.tab === 'beranda' ? vBeranda() : ui.tab === 'sidang' ? vJadwal('sidang') : ui.tab === 'periksa' ? vJadwal('periksa') : ui.tab === 'bebas' ? vBebas() : ui.tab === 'masuk' ? vMasuk() : ui.tab === 'penghuni' ? vPenghuni() : ui.tab === 'keluar' ? vKeluar() : ui.tab === 'mutasi' ? vMutasi() : ui.tab === 'agenda' ? vAgenda() : ui.tab === 'laporan' ? vLaporan() : ui.tab === 'kirim' ? vKirim() : vUnggah();
     } catch (e) { v = h('div', { class: 'msg bad', text: 'Tampilan gagal dibuat: ' + (e.message || e) }); }
@@ -2660,6 +2712,7 @@ function bukaLepas(e) {
     document.querySelector('.navrow').appendChild(lo);
     S.db = St.db; S.sample = St.sample; S.canWrite = St.canWrite();
     if (p2u()) { ui.tab = 'agenda'; document.body.classList.add('p2u'); var tvb = document.getElementById('tvbtn'); if (tvb) tvb.style.display = 'none'; }
+    if (sdgOnly()) { ui.tab = 'sidang'; document.body.classList.add('p2u'); var tvb2 = document.getElementById('tvbtn'); if (tvb2) tvb2.style.display = 'none'; }
     if (!wr() && (ui.tab === 'unggah' || ui.tab === 'laporan')) ui.tab = 'beranda';
     nav();
     setup();
