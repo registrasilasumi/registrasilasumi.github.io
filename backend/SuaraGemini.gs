@@ -20,10 +20,11 @@ function suaraGemini_(a) {
   var text = String(a.text || '').trim();
   if (!text || text.length > 600) return { error: { code: 'invalid_argument', message: 'Teks panggilan kosong atau terlalu panjang.' } };
   var voice = /^[A-Za-z]{2,24}$/.test(String(a.voice || '')) ? String(a.voice) : 'Nyla';   // nama suara di AI Studio, mis. Nyla, Fola, Enya
-  var gaya = String(a.gaya || 'Bacakan pengumuman resmi petugas lembaga pemasyarakatan berikut dalam bahasa Indonesia: formal, tegas, jelas, tempo tenang, intonasi datar profesional, tanpa terdengar akrab atau ceria').slice(0, 300);
+  // Catatan: tidak ada kalimat gaya di permintaan; model TTS ikut membacakannya. Karakter suara ditentukan oleh nama suara (mis. Nyla: langsung dan profesional).
+  var gaya = '';
 
   // simpan hasil di cache 6 jam supaya teks yang sama (mis. tombol Ulangi) tidak memakai kuota lagi
-  var ck = 'tts:' + Utilities.base64EncodeWebSafe(Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, voice + '|' + gaya + '|' + text, Utilities.Charset.UTF_8));
+  var ck = 'tts:' + Utilities.base64EncodeWebSafe(Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, voice + '|' + text, Utilities.Charset.UTF_8));
   var cache = CacheService.getScriptCache();
   var hit = cacheAmbil_(cache, ck);
   if (hit) return { ok: true, audio: hit, rate: 24000, cache: true };
@@ -41,7 +42,7 @@ function suaraGemini_(a) {
     contentType: 'application/json',
     headers: { 'x-goog-api-key': key },
     payload: JSON.stringify({
-      contents: [{ parts: [{ text: gaya + '.\n\n## Transcript:\n' + text }] }],
+      contents: [{ parts: [{ text: '## Transcript:\n' + text }] }],
       generationConfig: { responseModalities: ['AUDIO'], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } } }
     }),
     muteHttpExceptions: true
