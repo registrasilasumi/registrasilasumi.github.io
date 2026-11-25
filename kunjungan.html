@@ -164,9 +164,10 @@ body.layar .card h2{font-size:16px}
       </div>
       <div class="row">
         <label>Suara <select id="oVoice"></select></label>
-        <label>Kecepatan <select id="oRate"><option value="0.8">Lambat</option><option value="0.9" selected>Sedang</option><option value="1">Normal</option></select></label>
+        <label title="Untuk suara browser">Kecepatan <select id="oRate"><option value="0.8">Lambat</option><option value="0.9" selected>Sedang</option><option value="1">Normal</option></select></label>
         <label>Diucapkan <select id="oRep"><option value="1">1 kali</option><option value="2" selected>2 kali</option></select></label>
       </div>
+      <div class="note" id="vInfo"></div>
       <div class="row">
         <label><input type="checkbox" id="oWbp" checked> Sebut nama WBP yang dikunjungi</label>
         <label><input type="checkbox" id="oBel" checked> Bunyi bel sebelum panggilan</label>
@@ -195,6 +196,7 @@ body.layar .card h2{font-size:16px}
   </div>
 </main>
 
+<script src="config.js"></script>
 <script>
 (function () {
   'use strict';
@@ -320,7 +322,7 @@ body.layar .card h2{font-size:16px}
     st.cur = id; st.flash = Date.now();
     save(); render(); announce(r);
   }
-  $('bNext').onclick = function () { var w = waiting(); if (w.length) call(w[0]); else say('Belum ada antrian yang hadir.'); };
+  $('bNext').onclick = function () { var w = waiting(); if (w.length) call(w[0]); else sayBrowser('Belum ada antrian yang hadir.'); };
   $('bAgain').onclick = function () { var r = st.cur && find(st.cur); if (r) { st.flash = Date.now(); save(); render(); announce(r); } };
   $('bSkip').onclick = function () { if (!st.cur) return; st.skip[st.cur] = 1; st.cur = null; save(); render(); };
   $('bReset').onclick = function () { if (confirm('Kosongkan semua riwayat panggilan hari ini di komputer ini?')) { st = { tgl: today(), called: {}, skip: {}, cur: null, seq: 0 }; save(); render(); } };
@@ -333,56 +335,126 @@ body.layar .card h2{font-size:16px}
     else if (e.key === 'r' || e.key === 'R') $('bAgain').click();
   });
 
-  /* ---------- suara ---------- */
+  /* ---------- suara ----------
+     Dua pilihan: suara Gemini (Google AI Studio, lewat Apps Script supaya kunci API tidak ada di browser)
+     atau suara bawaan browser. Gemini butuh kode akses dashboard (localStorage 'kode', origin yang sama). */
+  var GEM = [['Kore', 'wanita, tegas'], ['Aoede', 'wanita, ringan'], ['Leda', 'wanita, muda'], ['Zephyr', 'wanita, cerah'],
+             ['Charon', 'pria, informatif'], ['Puck', 'pria, ceria'], ['Orus', 'pria, tegas'], ['Fenrir', 'pria, bersemangat']];
   var voices = [];
+  function kodeAkses() { try { return localStorage.getItem('kode') || ''; } catch (e) { return ''; } }
+  function bisaGemini() { return !!kodeAkses() && !!window.API_URL && !/GANTI/.test(window.API_URL); }
   function pickVoices() {
-    if (!('speechSynthesis' in window)) { $('oVoice').innerHTML = '<option>Browser tidak mendukung suara</option>'; return; }
-    voices = speechSynthesis.getVoices().filter(function (v) { return /^id|^in/i.test(v.lang); });
-    var all = speechSynthesis.getVoices();
+    var all = ('speechSynthesis' in window) ? speechSynthesis.getVoices() : [];
+    voices = all.filter(function (v) { return /^id|^in/i.test(v.lang); });
     if (!voices.length) voices = all;
     voices.sort(function (a, b) { return score(b) - score(a); });
-    $('oVoice').innerHTML = voices.map(function (v, i) { return '<option value="' + i + '">' + esc(v.name) + ' (' + esc(v.lang) + ')</option>'; }).join('') ||
-      '<option>Suara Indonesia belum tersedia</option>';
-    if (opt.voice) for (var i = 0; i < voices.length; i++) if (voices[i].name === opt.voice) $('oVoice').value = String(i);
+    var g = bisaGemini();
+    $('oVoice').innerHTML =
+      '<optgroup label="Gemini AI (lebih natural)">' + GEM.map(function (x) {
+        return '<option value="g:' + x[0] + '"' + (g ? '' : ' disabled') + '>Gemini ' + x[0] + ' (' + x[1] + ')</option>'; }).join('') + '</optgroup>' +
+      '<optgroup label="Suara browser">' + (voices.map(function (v) {
+        return '<option value="b:' + esc(v.name) + '">' + esc(v.name) + ' (' + esc(v.lang) + ')</option>'; }).join('') || '<option value="b:" >Suara bawaan</option>') + '</optgroup>';
+    var want = opt.voice || (g ? 'g:Kore' : '');
+    if (want && !(want.indexOf('g:') === 0 && !g)) $('oVoice').value = want;
+    if (!$('oVoice').value || $('oVoice').selectedOptions[0].disabled) { var f = $('oVoice').querySelector('option[value^="b:"]'); if (f) $('oVoice').value = f.value; }
+    $('vInfo').textContent = g ? '' : 'Suara Gemini aktif setelah masuk di Dashboard dengan kode akses.';
   }
   function score(v) { return (/^id|^in/i.test(v.lang) ? 10 : 0) + (/google/i.test(v.name) ? 5 : 0) + (/natural|online/i.test(v.name) ? 3 : 0); }
-  if ('speechSynthesis' in window) { pickVoices(); speechSynthesis.onvoiceschanged = pickVoices; }
+  pickVoices();
+  if ('speechSynthesis' in window) speechSynthesis.onvoiceschanged = pickVoices;
+  function gemVoice() { var v = $('oVoice').value || ''; return v.indexOf('g:') === 0 && bisaGemini() ? v.slice(2) : ''; }
 
   function title(s) { return String(s || '').toLowerCase().replace(/(^|[\s.\-'])([a-z])/g, function (m, a, b) { return a + b.toUpperCase(); }); }
   function wbpNama(w) { return String(w || '').split(' / ')[0].replace(/\(alm\.?\)|\(almh\.?\)/ig, '').replace(/\s+(bin|binti)\s+.*$/i, '').trim(); }
   function wbpKamar(w) { var p = String(w || '').split(' / '); return p.length > 1 ? p.slice(1).join(' / ') : ''; }
 
+  var actx = null;
+  function ctx() {
+    var A = window.AudioContext || window.webkitAudioContext;
+    if (!actx && A) actx = new A();
+    if (actx && actx.state === 'suspended') actx.resume();
+    return actx;
+  }
   function bell(cb) {
     if (!$('oBel').checked) return cb();
     try {
-      var A = window.AudioContext || window.webkitAudioContext, ctx = new A(), t0 = ctx.currentTime;
+      var c = ctx(), t0 = c.currentTime + 0.05;
       [[659.25, 0], [523.25, 0.45]].forEach(function (n) {
-        var o = ctx.createOscillator(), g = ctx.createGain();
+        var o = c.createOscillator(), g = c.createGain();
         o.type = 'sine'; o.frequency.value = n[0];
         g.gain.setValueAtTime(0.0001, t0 + n[1]); g.gain.exponentialRampToValueAtTime(0.35, t0 + n[1] + 0.03); g.gain.exponentialRampToValueAtTime(0.0001, t0 + n[1] + 1.1);
-        o.connect(g); g.connect(ctx.destination); o.start(t0 + n[1]); o.stop(t0 + n[1] + 1.2);
+        o.connect(g); g.connect(c.destination); o.start(t0 + n[1]); o.stop(t0 + n[1] + 1.2);
       });
-      setTimeout(function () { ctx.close(); cb(); }, 1500);
+      setTimeout(cb, 1500);
     } catch (e) { cb(); }
   }
-  function say(text) {
+  function sayBrowser(text) {
     if (!('speechSynthesis' in window)) return;
     speechSynthesis.cancel();
-    var rep = parseInt($('oRep').value, 10) || 1;
+    var rep = parseInt($('oRep').value, 10) || 1, name = ($('oVoice').value || '').replace(/^[bg]:/, '');
+    var v = voices.filter(function (x) { return x.name === name; })[0] || voices.filter(function (x) { return /^id|^in/i.test(x.lang); })[0];
     for (var i = 0; i < rep; i++) {
       var u = new SpeechSynthesisUtterance(text);
-      var v = voices[parseInt($('oVoice').value, 10)];
       if (v) { u.voice = v; u.lang = v.lang; } else u.lang = 'id-ID';
       u.rate = parseFloat($('oRate').value) || 0.9;
       speechSynthesis.speak(u);
     }
   }
-  function announce(r) {
+
+  /* Gemini: ambil audio PCM 24 kHz dari Apps Script, simpan di memori supaya Ulangi tidak meminta lagi */
+  var gemCache = {};
+  function gemFetch(text, voice) {
+    var k = voice + '|' + text;
+    if (gemCache[k]) return gemCache[k];
+    var p = fetch(window.API_URL, {
+      method: 'POST', redirect: 'follow', credentials: 'omit',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ kode: kodeAkses(), op: 'tts', args: { text: text, voice: voice } })
+    }).then(function (r) { if (!r.ok) throw new Error('Server membalas ' + r.status); return r.json(); })
+      .then(function (r) {
+        if (!r || r.error || !r.audio) throw new Error((r && r.error && r.error.message) || 'Audio kosong');
+        var bin = atob(r.audio), n = bin.length >> 1, f = new Float32Array(n);
+        for (var i = 0; i < n; i++) { var x = bin.charCodeAt(2 * i) | (bin.charCodeAt(2 * i + 1) << 8); f[i] = (x > 32767 ? x - 65536 : x) / 32768; }
+        return { pcm: f, rate: r.rate || 24000 };
+      });
+    gemCache[k] = p;
+    p.catch(function () { delete gemCache[k]; });
+    return p;
+  }
+  var playing = [];
+  function stopAudio() { playing.forEach(function (s) { try { s.stop(); } catch (e) {} }); playing = []; if ('speechSynthesis' in window) speechSynthesis.cancel(); }
+  function playPcm(a) {
+    var c = ctx(), rep = parseInt($('oRep').value, 10) || 1;
+    var buf = c.createBuffer(1, a.pcm.length, a.rate); buf.copyToChannel(a.pcm, 0);
+    var t = c.currentTime + 0.05;
+    for (var i = 0; i < rep; i++) {
+      var s = c.createBufferSource(); s.buffer = buf; s.connect(c.destination); s.start(t); playing.push(s);
+      t += buf.duration + 0.8;
+    }
+  }
+  function kalimat(r) {
     var tujuan = $('oTujuan').value.trim() || 'ruang kunjungan';
-    var txt = 'Nomor antrian, ' + num(r) + '. Atas nama, ' + title(r.nama) +
+    return 'Nomor antrian, ' + num(r) + '. Atas nama, ' + title(r.nama) +
       ($('oWbp').checked && r.wbp ? ', mengunjungi warga binaan, ' + title(wbpNama(r.wbp)) : '') +
       '. Silakan menuju ' + tujuan + '.';
-    bell(function () { say(txt); });
+  }
+  function announce(r) {
+    stopAudio();
+    var txt = kalimat(r), gv = gemVoice();
+    var audio = gv ? gemFetch(txt, gv) : null;
+    ctx();
+    bell(function () {
+      if (!audio) return sayBrowser(txt);
+      $('vInfo').textContent = 'Menyiapkan suara Gemini...';
+      audio.then(function (a) { $('vInfo').textContent = ''; playPcm(a); })
+        .catch(function (e) { $('vInfo').textContent = 'Gemini gagal (' + e.message + '), memakai suara browser.'; sayBrowser(txt); });
+    });
+  }
+  /* siapkan audio Gemini untuk antrian berikutnya supaya panggilan langsung terdengar */
+  var preT = null;
+  function prefetchNext() {
+    clearTimeout(preT);
+    preT = setTimeout(function () { var gv = gemVoice(), w = waiting(); if (!LAYAR && gv && w.length) gemFetch(kalimat(w[0]), gv).catch(function () {}); }, 800);
   }
 
   ['oTujuan', 'oVoice', 'oRate', 'oRep', 'oWbp', 'oBel'].forEach(function (id) {
@@ -390,7 +462,7 @@ body.layar .card h2{font-size:16px}
     if (opt[id] != null && id !== 'oVoice') { if (el.type === 'checkbox') el.checked = !!opt[id]; else el.value = opt[id]; }
     el.addEventListener('change', function () {
       opt[id] = el.type === 'checkbox' ? el.checked : el.value;
-      if (id === 'oVoice' && voices[el.value]) opt.voice = voices[el.value].name;
+      if (id === 'oVoice') opt.voice = el.value;
       lsSet(KEY_OPT, opt); render();
     });
   });
@@ -434,6 +506,7 @@ body.layar .card h2{font-size:16px}
     var nHadir = data.rows.filter(hadir).length;
     $('stats').innerHTML = data.rows.length ? 'Total <b>' + data.rows.length + '</b> · Hadir <b>' + nHadir + '</b> · Belum hadir <b>' + (data.rows.length - nHadir) + '</b>' : '';
     $('bNext').disabled = !w.length;
+    prefetchNext();
   }
   document.addEventListener('click', function (e) {
     var b = e.target.closest('[data-call],[data-undo]'); if (!b) return;
