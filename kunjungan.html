@@ -338,8 +338,8 @@ body.layar .card h2{font-size:16px}
   /* ---------- suara ----------
      Dua pilihan: suara Gemini (Google AI Studio, lewat Apps Script supaya kunci API tidak ada di browser)
      atau suara bawaan browser. Gemini butuh kode akses dashboard (localStorage 'kode', origin yang sama). */
-  var GEM = [['Kore', 'wanita, tegas'], ['Aoede', 'wanita, ringan'], ['Leda', 'wanita, muda'], ['Zephyr', 'wanita, cerah'],
-             ['Charon', 'pria, informatif'], ['Puck', 'pria, ceria'], ['Orus', 'pria, tegas'], ['Fenrir', 'pria, bersemangat']];
+  var GEM = [['Nyla', 'wanita, langsung dan profesional'], ['Enya', 'wanita, langsung dan profesional'], ['Fola', 'wanita, jernih dan ramah'],
+             ['Cleo', 'wanita, hangat'], ['Hali', 'wanita, tenang'], ['Kira', 'wanita, tenang dan percaya diri']];
   var voices = [];
   function kodeAkses() { try { return localStorage.getItem('kode') || ''; } catch (e) { return ''; } }
   function bisaGemini() { return !!kodeAkses() && !!window.API_URL && !/GANTI/.test(window.API_URL); }
@@ -354,7 +354,7 @@ body.layar .card h2{font-size:16px}
         return '<option value="g:' + x[0] + '"' + (g ? '' : ' disabled') + '>Gemini ' + x[0] + ' (' + x[1] + ')</option>'; }).join('') + '</optgroup>' +
       '<optgroup label="Suara browser">' + (voices.map(function (v) {
         return '<option value="b:' + esc(v.name) + '">' + esc(v.name) + ' (' + esc(v.lang) + ')</option>'; }).join('') || '<option value="b:" >Suara bawaan</option>') + '</optgroup>';
-    var want = opt.voice || (g ? 'g:Kore' : '');
+    var want = opt.voice || (g ? 'g:Nyla' : '');
     if (want && !(want.indexOf('g:') === 0 && !g)) $('oVoice').value = want;
     if (!$('oVoice').value || $('oVoice').selectedOptions[0].disabled) { var f = $('oVoice').querySelector('option[value^="b:"]'); if (f) $('oVoice').value = f.value; }
     $('vInfo').textContent = g ? '' : 'Suara Gemini aktif setelah masuk di Dashboard dengan kode akses.';
