@@ -224,7 +224,7 @@ details>summary{cursor:pointer;color:var(--ink2);padding:6px 0}
     </div>
   </header>
 </div></div>
-<div class="navbar"><div class="wrap navrow"><nav id="nav" role="tablist" aria-label="Bagian dashboard"></nav><a class="tvbtn" id="tvbtn" href="tv.html" target="_blank" rel="noopener" title="Tampilan layar penuh yang berputar otomatis untuk TV"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="20" height="13" rx="2"></rect><path d="M8 21h8M12 17v4"></path></svg><span>Mode TV</span></a><div class="theme" id="theme" role="group" aria-label="Tema tampilan"></div></div></div>
+<div class="navbar"><div class="wrap navrow"><nav id="nav" role="tablist" aria-label="Bagian dashboard"></nav><a class="tvbtn" id="tvbtn" href="tv.html" target="_blank" rel="noopener" title="Tampilan layar penuh yang berputar otomatis untuk TV"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="20" height="13" rx="2"></rect><path d="M8 21h8M12 17v4"></path></svg><span>Mode TV</span></a><a class="tvbtn" id="kjbtn" href="kunjungan.html" target="_blank" rel="noopener" title="Panggilan antrian kunjungan narapidana dengan suara"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5z"></path><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"></path></svg><span>Kunjungan</span></a><div class="theme" id="theme" role="group" aria-label="Tema tampilan"></div></div></div>
 <div class="wrap" id="app">
   <div id="banner"></div>
   <div class="ponly" id="ptitle"></div>
@@ -2711,8 +2711,8 @@ function bukaLepas(e) {
     var lo = h('button', { class: 'btn', text: 'Keluar akun', title: St.email(), style: 'flex:none', onclick: function () { St.logout().then(function () { location.reload(); }); } });
     document.querySelector('.navrow').appendChild(lo);
     S.db = St.db; S.sample = St.sample; S.canWrite = St.canWrite();
-    if (p2u()) { ui.tab = 'agenda'; document.body.classList.add('p2u'); var tvb = document.getElementById('tvbtn'); if (tvb) tvb.style.display = 'none'; }
-    if (sdgOnly()) { ui.tab = 'sidang'; document.body.classList.add('p2u'); var tvb2 = document.getElementById('tvbtn'); if (tvb2) tvb2.style.display = 'none'; }
+    if (p2u()) { ui.tab = 'agenda'; document.body.classList.add('p2u'); var tvb = document.getElementById('tvbtn'); if (tvb) tvb.style.display = 'none'; var kjb = document.getElementById('kjbtn'); if (kjb) kjb.style.display = 'none'; }
+    if (sdgOnly()) { ui.tab = 'sidang'; document.body.classList.add('p2u'); var tvb2 = document.getElementById('tvbtn'); if (tvb2) tvb2.style.display = 'none'; var kjb = document.getElementById('kjbtn'); if (kjb) kjb.style.display = 'none'; }
     if (!wr() && (ui.tab === 'unggah' || ui.tab === 'laporan')) ui.tab = 'beranda';
     nav();
     setup();
@@ -2745,7 +2745,7 @@ function bukaLepas(e) {
 .navrow #nav>*{flex:0 0 auto;white-space:nowrap}
 .navrow .btn{flex:0 0 auto;white-space:nowrap}
 .toolrow{display:flex;justify-content:flex-end;align-items:center;gap:10px;padding-top:10px;padding-bottom:0}
-.toolrow #tvbtn,.toolrow #theme{flex:0 0 auto}
+.toolrow #tvbtn,.toolrow #kjbtn,.toolrow #theme{flex:0 0 auto}
 </style>
 <style id="patch-bnav">
 #bnav,#bmenu{display:none}
@@ -2777,7 +2777,7 @@ body.p2u{padding-bottom:0!important}
   var nb=document.querySelector('.navbar'), tv=document.getElementById('tvbtn'), th=document.getElementById('theme');
   if(!nb||!tv||!th) return;
   var row=document.createElement('div'); row.className='wrap toolrow';
-  row.appendChild(tv); row.appendChild(th); nb.after(row);
+  row.appendChild(tv); var kj=document.getElementById('kjbtn'); if(kj) row.appendChild(kj); row.appendChild(th); nb.after(row);
 })();
 </script>
 </body>
