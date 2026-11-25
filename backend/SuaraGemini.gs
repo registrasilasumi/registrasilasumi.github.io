@@ -21,7 +21,7 @@ function suaraGemini_(a) {
   var text = String(a.text || '').trim();
   if (!text || text.length > 600) return { error: { code: 'invalid_argument', message: 'Teks panggilan kosong atau terlalu panjang.' } };
   var voice = SUARA_GEMINI_.indexOf(String(a.voice)) >= 0 ? String(a.voice) : 'Kore';
-  var gaya = String(a.gaya || 'Bacakan pengumuman berikut dalam bahasa Indonesia dengan suara petugas yang ramah, jelas, dan tidak terburu-buru').slice(0, 300);
+  var gaya = String(a.gaya || 'Bacakan pengumuman resmi petugas lembaga pemasyarakatan berikut dalam bahasa Indonesia: formal, tegas, jelas, tempo tenang, intonasi datar profesional, tanpa terdengar akrab atau ceria').slice(0, 300);
 
   // simpan hasil di cache 6 jam supaya teks yang sama (mis. tombol Ulangi) tidak memakai kuota lagi
   var ck = 'tts:' + Utilities.base64EncodeWebSafe(Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, voice + '|' + gaya + '|' + text, Utilities.Charset.UTF_8));
@@ -84,6 +84,6 @@ function cacheAmbil_(cache, ck) {
 
 /* Jalankan dari editor untuk mencoba: lihat Execution log */
 function cobaSuaraGemini() {
-  var r = suaraGemini_({ text: 'Nomor antrian, 3. Atas nama, Budi Santoso. Silakan menuju ruang kunjungan.' });
+  var r = suaraGemini_({ text: 'Nomor antrian, 3. Atas nama, Budi Santoso. Dipersilakan menuju ruang kunjungan. Terima kasih.' });
   Logger.log(r.error ? r.error.message : 'OK, audio ' + r.audio.length + ' karakter base64');
 }

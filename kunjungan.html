@@ -434,9 +434,9 @@ body.layar .card h2{font-size:16px}
   }
   function kalimat(r) {
     var tujuan = $('oTujuan').value.trim() || 'ruang kunjungan';
-    return 'Nomor antrian, ' + num(r) + '. Atas nama, ' + title(r.nama) +
-      ($('oWbp').checked && r.wbp ? ', mengunjungi warga binaan, ' + title(wbpNama(r.wbp)) : '') +
-      '. Silakan menuju ' + tujuan + '.';
+    return 'Perhatian. Nomor antrian, ' + num(r) + '. Atas nama, ' + title(r.nama) +
+      ($('oWbp').checked && r.wbp ? ', pengunjung warga binaan, ' + title(wbpNama(r.wbp)) : '') +
+      '. Dipersilakan menuju ' + tujuan + '. Terima kasih.';
   }
   function announce(r) {
     stopAudio();
