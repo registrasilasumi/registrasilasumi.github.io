@@ -7,7 +7,7 @@
  *       if (String(b.op || '').indexOf('kj.') === 0) r = kunjungan_(b); else
  *     (lihat backend/Kode.kunjungan.diff).
  *  3. Isi Script property KODE_KUNJUNGAN (kode akses petugas kunjungan). Editor juga bisa masuk.
- *  4. Jalankan kjSiapkan() sekali dari editor (membuat sheet, garam NIK, dan pemicu hapus otomatis harian).
+ *  4. Jalankan kjSiapkan() sekali dari editor (membuat sheet dan garam NIK; hapus otomatis berjalan sendiri sekali sehari).
  *  5. Terapkan > Kelola deployment > edit > Versi baru (URL tetap).
  *
  * Data pendaftaran ada di sheet 'kunjungan' (terpisah dari 'docs'), jadi tidak ikut snapshot situs utama.
@@ -223,6 +223,7 @@ function kjPenghuni_() {
 
 /* ---------- operasi publik ---------- */
 function kjInfo_() {
+  kjBersihkanHarian_();
   if (!kjBatas_('info', 300)) return { error: { code: 'rate_limited', message: 'Server sedang sibuk. Coba lagi sebentar.' } };
   var c = kjConf_();
   var layanan = Object.keys(KJ_LAYANAN).map(function (k) { return { id: k, nama: KJ_LAYANAN[k].nama }; });
@@ -400,10 +401,18 @@ function kjSiapkan() {
   var P = PropertiesService.getScriptProperties();
   if (!P.getProperty('KJ_SALT')) P.setProperty('KJ_SALT', Utilities.getUuid() + Utilities.getUuid());
   kjSheet_();
-  var ada = ScriptApp.getProjectTriggers().some(function (t) { return t.getHandlerFunction() === 'kjBersihkan'; });
-  if (!ada) ScriptApp.newTrigger('kjBersihkan').timeBased().everyDays(1).atHour(1).inTimezone(KJ_TZ).create();
   if (!P.getProperty('KODE_KUNJUNGAN')) Logger.log('LANGKAH BERIKUT: isi KODE_KUNJUNGAN di Project Settings > Script properties.');
   Logger.log('Pendaftaran kunjungan siap.');
+}
+
+// hapus otomatis tanpa pemicu waktu (tidak perlu izin tambahan): dijalankan paling sering sekali per hari, saat ada yang membuka formulir
+function kjBersihkanHarian_() {
+  try {
+    var P = PropertiesService.getScriptProperties(), hari = kjHari_(0);
+    if (P.getProperty('KJ_BERSIH') === hari) return;
+    P.setProperty('KJ_BERSIH', hari);
+    kjBersihkan();
+  } catch (e) { /* abaikan, dicoba lagi besok */ }
 }
 
 function kjBersihkan() {
