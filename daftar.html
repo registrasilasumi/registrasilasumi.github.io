@@ -2,189 +2,198 @@
 <html lang="id">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
 <title>Daftar Kunjungan – Lapas Sukamiskin</title>
 <meta name="description" content="Pendaftaran kunjungan dan penitipan barang untuk keluarga WBP Lapas Kelas I Sukamiskin.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<script src="tema.js"></script>
+<link rel="stylesheet" href="kj-ui.css">
 <style>
 /* Formulir publik pendaftaran kunjungan. Data dikirim ke server Apps Script (operasi kj.*).
    Di perangkat pengunjung hanya disimpan tiket (kode, nomor, tanggal) di localStorage supaya bisa dibuka lagi. */
-:root{
-  --bg:#EBEDEF;--panel:#FFFFFF;--top:#DCE0E3;--ink:#1E272D;--ink2:#4E5B64;--ink3:#76838C;--line:#CDD3D8;
-  --accent:#46576A;--accentbg:#E3E8EC;--teal:#1F6F6B;--tealbg:#DDEDEB;
-  --ok:#2E6B3B;--okbg:#E3F0E4;--warn:#80530A;--warnbg:#F7EACB;--bad:#9A2C2C;--badbg:#F6E0DE;
-  --font:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;--mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
-}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --bg:#12171B;--panel:#1B2227;--top:#222B31;--ink:#E8EDF0;--ink2:#AEB9C0;--ink3:#82909A;--line:#303B43;
-  --accent:#8FA6BD;--accentbg:#27323A;--teal:#55B3AD;--tealbg:#1D3331;
-  --ok:#7CC48C;--okbg:#1F3425;--warn:#E3B565;--warnbg:#3A2E14;--bad:#E59090;--badbg:#3E2222;color-scheme:dark}}
-:root[data-theme="dark"]{
-  --bg:#12171B;--panel:#1B2227;--top:#222B31;--ink:#E8EDF0;--ink2:#AEB9C0;--ink3:#82909A;--line:#303B43;
-  --accent:#8FA6BD;--accentbg:#27323A;--teal:#55B3AD;--tealbg:#1D3331;
-  --ok:#7CC48C;--okbg:#1F3425;--warn:#E3B565;--warnbg:#3A2E14;--bad:#E59090;--badbg:#3E2222;color-scheme:dark}
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:100vh;font-size:16px;line-height:1.45}
-button,select,input{font:inherit;color:inherit}
-button{cursor:pointer}
-header{background:var(--top);border-bottom:1px solid var(--line);padding:14px 16px}
-header .in{max-width:640px;margin:0 auto}
-header small{display:block;font-size:11px;letter-spacing:.08em;color:var(--ink2);font-weight:600;text-transform:uppercase}
-header h1{font-size:20px;font-weight:700;line-height:1.25}
-main{max-width:640px;margin:0 auto;padding:16px 16px 48px}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px}
-.card h2{font-size:15px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:8px}
-.card h2 .n{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--accentbg);color:var(--accent);font-size:13px;font-family:var(--mono)}
-.info{background:var(--tealbg);color:var(--ink);border-radius:10px;padding:10px 12px;font-size:14px;margin-bottom:14px}
-.top-links{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
-.lnk{background:none;border:none;color:var(--teal);font-weight:600;text-decoration:underline;padding:0;font-size:14px}
-label.f{display:block;margin-top:12px;font-size:14px;font-weight:600}
-label.f:first-of-type{margin-top:0}
-label.f .h{display:block;font-weight:400;color:var(--ink3);font-size:12.5px}
-input[type=text],input[type=tel],input[type=number],select{display:block;width:100%;margin-top:4px;border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:11px 12px;font-size:16px;min-width:0}
-input:focus,select:focus,button:focus-visible{outline:2px solid var(--teal);outline-offset:1px}
-.cal{border:1px solid var(--line);border-radius:12px;background:var(--bg);padding:10px}
-.cal-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-.cal-h b{font-size:15px}
-.cal-h button{width:38px;height:38px;border:1px solid var(--line);background:var(--panel);border-radius:10px;font-size:18px;line-height:1}
-.cal-h button:disabled{opacity:.35;cursor:not-allowed}
-.cal-w,.cal-g{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+main{max-width:640px;margin:0 auto;padding:16px 16px calc(120px + env(safe-area-inset-bottom))}
+.info{background:var(--accentbg);color:var(--ink);border-radius:12px;padding:12px 14px;font-size:14px;margin-bottom:14px;display:flex;gap:10px;align-items:flex-start}
+.info svg{flex:none;width:18px;height:18px;margin-top:2px;stroke:var(--accent);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.top-links{display:flex;gap:8px;flex-wrap:wrap;margin:-4px 0 12px}
+
+/* langkah */
+.steps{display:flex;align-items:center;margin:4px 2px 16px}
+.steps .s{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--ink3);flex:none;background:none;border:0;padding:4px 0}
+.steps .s i{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-family:var(--mono);font-size:13px;border:2px solid var(--line);background:var(--panel);transition:all .25s var(--ease)}
+.steps .s.on{color:var(--ink)}.steps .s.on i{border-color:var(--accent);background:var(--accent);color:var(--accentink);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 18%,transparent)}
+.steps .s.done{color:var(--ink2)}.steps .s.done i{border-color:var(--accent);background:var(--accentbg);color:var(--accent)}
+.steps .l{flex:1;height:2px;background:var(--line);margin:0 8px;border-radius:2px;position:relative;overflow:hidden}
+.steps .l::after{content:"";position:absolute;inset:0;background:var(--accent);transform:scaleX(0);transform-origin:left;transition:transform .35s var(--ease)}
+.steps .l.on::after{transform:scaleX(1)}
+@media (max-width:420px){.steps .s span{display:none}.steps .s.on span{display:inline}}
+.step{animation:rise .3s var(--ease)}
+.step h3{font-size:19px;font-weight:700;margin:2px 0 2px}
+.step .sub{color:var(--ink2);font-size:14px;margin-bottom:14px}
+
+/* bar aksi */
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:40;background:color-mix(in srgb,var(--panel) 92%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line2);box-shadow:var(--shadow-up);padding:12px 16px calc(12px + env(safe-area-inset-bottom))}
+.bar .in{max-width:640px;margin:0 auto;display:flex;gap:10px}
+.bar .btn{flex:1}.bar #back{flex:0 0 auto;min-width:96px}
+.formmsg{max-width:640px;margin:0 auto}
+
+/* kalender */
+.cal{border:1px solid var(--line2);border-radius:14px;background:var(--panel2);padding:12px}
+.cal-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.cal-h b{font-size:16px}
+.cal-h button{width:40px;height:40px;border:1px solid var(--line);background:var(--panel);border-radius:12px;font-size:20px;line-height:1;transition:transform .1s,background .15s}
+.cal-h button:active{transform:scale(.94)}
+.cal-h button:disabled{opacity:.3;cursor:not-allowed}
+.cal-w,.cal-g{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
 .cal-w span{text-align:center;font-size:11px;font-weight:600;color:var(--ink3);padding:2px 0 4px}
 .cal-g i{display:block}
-.cal-g button{position:relative;aspect-ratio:1/1.08;min-width:0;border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:2px 0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px}
+.cal-g button{position:relative;aspect-ratio:1/1.1;min-width:0;border:1px solid var(--line2);background:var(--panel);border-radius:12px;padding:2px 0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;transition:transform .12s var(--ease),background .15s,border-color .15s}
 .cal-g button b{font-size:15px;font-weight:700}
 .cal-g button span{font-size:9.5px;color:var(--ink2);line-height:1.1}
-.cal-g button.ok{border-color:color-mix(in srgb,var(--ok) 45%,var(--line));background:var(--okbg)}
+.cal-g button.ok{border-color:color-mix(in srgb,var(--ok) 40%,var(--line2));background:var(--okbg)}
+.cal-g button.ok:active{transform:scale(.93)}
 .cal-g button.low span{color:var(--warn);font-weight:700}
 .cal-g button.full{background:var(--badbg);border-color:transparent}.cal-g button.full span{color:var(--bad)}
 .cal-g button.off{background:transparent;border-color:transparent;color:var(--ink3)}
-.cal-g button.today::after{content:"";position:absolute;top:4px;right:4px;width:6px;height:6px;border-radius:50%;background:var(--teal)}
-.cal-g button[aria-pressed=true]{background:var(--teal);border-color:var(--teal);color:#fff;box-shadow:0 0 0 2px color-mix(in srgb,var(--teal) 30%,transparent)}
-.cal-g button[aria-pressed=true] span{color:#fff}
+.cal-g button.today::after{content:"";position:absolute;top:5px;right:5px;width:6px;height:6px;border-radius:50%;background:var(--accent)}
+.cal-g button[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:var(--accentink);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 28%,transparent);animation:pop .25s var(--ease)}
+.cal-g button[aria-pressed=true] span{color:var(--accentink)}
 .cal-g button:disabled{cursor:not-allowed}
-.cal-leg{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px;font-size:11.5px;color:var(--ink2)}
-.cal-leg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+.cal-leg{display:flex;gap:14px;flex-wrap:wrap;margin-top:12px;font-size:11.5px;color:var(--ink2)}
+.cal-leg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
 .cal-sum{margin-top:10px;font-size:14px;font-weight:600;min-height:21px}
-.seg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
-.seg button{border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:10px;font-weight:600;font-size:14px}
-.seg button[aria-pressed=true]{border-color:var(--teal);background:var(--tealbg);box-shadow:0 0 0 1px var(--teal) inset}
-.res{list-style:none;margin-top:6px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.seg button{border:1.5px solid var(--line);background:var(--panel2);border-radius:12px;padding:12px 10px;font-weight:600;font-size:14px;min-height:48px;transition:all .18s var(--ease)}
+.seg button[aria-pressed=true]{border-color:var(--accent);background:var(--accentbg);color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+.res{list-style:none;margin-top:8px;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--panel)}
 .res:empty{display:none}
-.res li button{display:block;width:100%;text-align:left;border:none;border-top:1px solid var(--line);background:var(--panel);padding:10px 12px}
+.res li{animation:rise .2s var(--ease)}
+.res li button{display:block;width:100%;text-align:left;border:none;border-top:1px solid var(--line2);background:transparent;padding:13px 14px;min-height:48px}
 .res li:first-child button{border-top:none}
-.res li button:hover{background:var(--accentbg)}
+.res li button:hover,.res li button:active{background:var(--accentbg)}
 .res small{color:var(--ink3);font-family:var(--mono);font-size:12px}
-.pick{display:flex;align-items:center;gap:10px;margin-top:6px;border:1px solid var(--teal);background:var(--tealbg);border-radius:8px;padding:10px 12px}
+.pick{display:flex;align-items:center;gap:10px;border:1.5px solid var(--accent);background:var(--accentbg);border-radius:12px;padding:10px 12px;animation:pop .25s var(--ease)}
 .pick b{flex:1;min-width:0}
-.muted{color:var(--ink3);font-size:13px;margin-top:6px}
 .hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
-.cap{display:flex;gap:10px;align-items:center;margin-top:4px}
-.cap b{font-family:var(--mono);font-size:18px;background:var(--accentbg);border-radius:8px;padding:8px 12px;white-space:nowrap}
-.cap input{margin-top:0;max-width:110px}
-.btn{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:10px 16px;font-weight:600}
-.btn:hover{background:var(--accentbg)}
-.btn.pri{background:var(--teal);border-color:var(--teal);color:#fff;width:100%;font-size:17px;padding:14px}
-.btn.pri:disabled{opacity:.55;cursor:wait}
-.btn.sm{padding:6px 10px;font-size:13px}
-.msg{border-radius:10px;padding:10px 12px;font-size:14px;margin-top:12px}
-.msg.bad{background:var(--badbg);color:var(--bad)}
-.msg.ok{background:var(--okbg);color:var(--ok)}
-.msg:empty{display:none}
-.trio{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:6px}
-.trio label{font-size:12.5px;color:var(--ink2);font-weight:500}
-.fotorow{display:flex;gap:12px;align-items:center;margin-top:6px}
-.fotoprev{width:90px;aspect-ratio:3/4;border:1px dashed var(--line);border-radius:8px;background:var(--bg);display:grid;place-items:center;text-align:center;font-size:11px;color:var(--ink3);overflow:hidden;flex:none}
-.fotoprev img{width:100%;height:100%;object-fit:cover;display:block}
-.chk{display:flex;gap:8px;align-items:flex-start;margin-top:12px;font-size:14px}
-.chk input{margin-top:4px;width:18px;height:18px;flex:none}
+.trio{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.trio label{font-size:12.5px;color:var(--ink2);font-weight:500;display:block;margin-bottom:4px}
+.fotorow{display:flex;gap:14px;align-items:center}
+.fotoprev{width:96px;aspect-ratio:3/4;border:1.5px dashed var(--line);border-radius:12px;background:var(--panel2);display:grid;place-items:center;text-align:center;font-size:11px;color:var(--ink3);overflow:hidden;flex:none;transition:border-color .2s}
+.fotoprev img{width:100%;height:100%;object-fit:cover;display:block;animation:rise .3s var(--ease)}
+.fotoprev.has{border-style:solid;border-color:var(--ok)}
+.fotoact{display:flex;flex-direction:column;align-items:flex-start;gap:4px}
+.chk{display:flex;gap:12px;align-items:flex-start;margin-top:18px;font-size:14px;cursor:pointer}
+.chk input{margin-top:2px;width:22px;height:22px;flex:none;accent-color:var(--accent)}
+.sum{border:1px solid var(--line2);border-radius:12px;background:var(--panel2);padding:12px 14px;margin-top:18px;font-size:14px;display:grid;grid-template-columns:auto 1fr;gap:4px 12px}
+.sum dt{color:var(--ink3)}.sum dd{font-weight:600;overflow-wrap:anywhere}
+
 /* tiket */
-.tiket{text-align:center}
+.tiket{text-align:center;animation:rise .4s var(--ease)}
+.tiket .ck{width:64px;height:64px;border-radius:50%;background:var(--okbg);display:grid;place-items:center;margin:2px auto 8px;animation:pop .45s var(--ease)}
+.tiket .ck svg{width:34px;height:34px;stroke:var(--ok);fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:30;stroke-dashoffset:30;animation:draw .4s .25s var(--ease) forwards}
 .tiket .lay{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink2);font-weight:600}
-.tiket .no{font-family:var(--mono);font-size:64px;font-weight:700;color:var(--teal);line-height:1.05;margin:4px 0}
+.tiket .no{font-family:var(--mono);font-size:64px;font-weight:700;color:var(--accent);line-height:1.05;margin:4px 0}
 .tiket .tg{font-weight:600}
-.tiket .qr{display:inline-block;background:#fff;padding:10px;border-radius:10px;margin:14px 0 6px;border:1px solid var(--line)}
-.tiket .qr canvas{display:block;width:220px;height:220px;image-rendering:pixelated}
+.tiket .qr{display:inline-block;background:#fff;padding:10px;border-radius:14px;margin:14px 0 6px;border:1px solid var(--line);box-shadow:var(--shadow)}
+.tiket .qr canvas{display:block;width:220px;height:220px;max-width:100%;image-rendering:pixelated}
 .tiket .kd{font-family:var(--mono);font-size:15px;font-weight:700;letter-spacing:.04em;overflow-wrap:anywhere}
 .tiket dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;text-align:left;margin:14px auto 0;max-width:380px;font-size:14px}
 .tiket dt{color:var(--ink3)}
 .tiket dd{font-weight:600;overflow-wrap:anywhere}
-.acts{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:14px}
-.badge{display:inline-block;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700}
-.badge.hadir{background:var(--okbg);color:var(--ok)}.badge.batal{background:var(--badbg);color:var(--bad)}.badge.daftar{background:var(--accentbg);color:var(--accent)}
+.acts{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:16px}
 .mine{list-style:none}
-.mine li{display:flex;gap:10px;align-items:center;border-top:1px solid var(--line);padding:8px 0}
-.mine li:first-child{border-top:none}
+.mine li{display:flex;gap:10px;align-items:center;border-top:1px solid var(--line2);padding:10px 0}
+.mine li:first-child{border-top:none;padding-top:0}
 .mine li span{flex:1;font-size:14px}
-[hidden]{display:none!important}
-
+#load{display:grid;gap:12px}
+#load .skel{height:18px}
 </style>
 </head>
 <body>
-<header><div class="in"><small>Lapas Kelas I Sukamiskin</small><h1>Pendaftaran Kunjungan</h1></div></header>
+<header class="top"><div class="in">
+  <div class="brand"><span class="lg"><img src="logo-k.png" alt="Kemenimipas" width="36" height="34"><img src="logo-l.png" alt="Lapas Sukamiskin" width="36" height="36"></span><div><small>Lapas Kelas I Sukamiskin</small><b>Pendaftaran Kunjungan</b></div></div>
+  <div id="tema"></div>
+</div></header>
 <main>
-  <div id="load" class="card">Memuat jadwal…</div>
+  <div id="load" class="card" aria-live="polite"><div class="skel" style="width:60%"></div><div class="skel" style="height:140px"></div><div class="skel" style="width:80%"></div></div>
 
   <section id="tiketBox" hidden></section>
 
   <div id="form" hidden>
-    <div class="info" id="info"></div>
+    <div class="info"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg><span id="info"></span></div>
     <div class="top-links"><button class="lnk" type="button" id="bukaCari">Sudah daftar? Buka tiket</button></div>
 
     <section class="card" id="cari" hidden>
       <h2>Buka tiket</h2>
-      <label class="f">Kode pendaftaran<input type="text" id="cKode" placeholder="SKM-…" autocapitalize="characters" autocomplete="off"></label>
-      <label class="f">4 angka terakhir nomor HP<input type="tel" id="cHp" inputmode="numeric" maxlength="4" autocomplete="off"></label>
-      <div style="margin-top:12px"><button class="btn" type="button" id="cGo">Buka</button></div>
+      <div class="fld"><label for="cKode">Kode pendaftaran</label><input type="text" id="cKode" placeholder="SKM-…" autocapitalize="characters" autocomplete="off"></div>
+      <div class="fld"><label for="cHp">4 angka terakhir nomor HP</label><input type="tel" id="cHp" inputmode="numeric" maxlength="4" autocomplete="off"></div>
+      <div style="margin-top:14px"><button class="btn pri" type="button" id="cGo">Buka</button></div>
       <div class="msg" id="cMsg"></div>
     </section>
 
     <section class="card" id="saya" hidden><h2>Tiket di perangkat ini</h2><ul class="mine" id="sayaList"></ul></section>
 
+    <nav class="steps" id="steps" aria-label="Langkah pendaftaran">
+      <button type="button" class="s on" data-n="1"><i>1</i><span>Jadwal</span></button><div class="l"></div>
+      <button type="button" class="s" data-n="2"><i>2</i><span>Data diri</span></button><div class="l"></div>
+      <button type="button" class="s" data-n="3"><i>3</i><span>WBP</span></button>
+    </nav>
+
     <form id="f" novalidate autocomplete="on">
-      <section class="card">
-        <h2><span class="n">1</span>Layanan dan tanggal</h2>
-        <div class="seg" id="lay" role="group" aria-label="Layanan"></div>
-        <div id="days"></div>
-      </section>
-
-      <section class="card">
-        <h2><span class="n">2</span>Data pengunjung</h2>
-        <label class="f" id="nikL">NIK<span class="h">16 angka di KTP. Pernah mendaftar? Data akan terisi otomatis. NIK dicetak di bukti pendaftaran dan dihapus otomatis setelah 30 hari.</span>
-          <input type="text" id="nik" inputmode="numeric" maxlength="16" autocomplete="off"></label>
-        <div class="msg ok" id="auto" hidden></div>
-        <label class="f">Nama lengkap sesuai KTP<input type="text" id="nama" autocomplete="name" autocapitalize="characters" maxlength="60" required></label>
-        <label class="f">Jenis kelamin<select id="jk"><option value="">Pilih…</option><option value="L">Laki-laki</option><option value="P">Perempuan</option></select></label>
-        <label class="f">Nomor HP / WhatsApp<span class="h" id="hpH"></span><input type="tel" id="hp" inputmode="tel" autocomplete="tel" placeholder="08…" maxlength="16" required></label>
-        <label class="f">Alamat lengkap<span class="h">Sesuai KTP atau tempat tinggal sekarang</span><input type="text" id="alamat" autocomplete="street-address" maxlength="150"></label>
-        <div class="f" style="margin-top:12px"><b style="font-size:14px">Jumlah pengikut</b><span class="h" style="display:block;font-weight:400;color:var(--ink3);font-size:12.5px">Orang yang datang bersama Anda, tidak termasuk Anda</span>
-          <div class="trio"><label>Laki-laki dewasa<select id="pl"></select></label><label>Perempuan dewasa<select id="pp"></select></label><label>Anak-anak<select id="pa"></select></label></div>
-          <div class="muted" id="pkMsg"></div></div>
-        <div class="f" style="margin-top:12px"><b style="font-size:14px">Foto pengunjung</b><span class="h" style="display:block;font-weight:400;color:var(--ink3);font-size:12.5px">Foto wajah yang jelas, tanpa kacamata hitam atau masker. Dicetak di bukti pendaftaran.</span>
-          <div class="fotorow"><div class="fotoprev" id="fotoPrev"><span>Belum ada foto</span></div>
-            <div><input type="file" id="foto" accept="image/*" capture="user" hidden><input type="file" id="fotoGal" accept="image/*" hidden><button class="btn" type="button" id="fotoBtn">Ambil foto</button> <button class="lnk" type="button" id="fotoGalBtn">atau pilih dari galeri</button><div class="muted" id="fotoMsg"></div></div></div></div>
-      </section>
-
-      <section class="card">
-        <h2><span class="n">3</span>WBP yang dikunjungi</h2>
-        <div id="wbpCari">
-          <label class="f">Nama WBP<span class="h">Ketik minimal 3 huruf, lalu pilih dari daftar</span>
-            <input type="text" id="wq" autocomplete="off" autocapitalize="characters" spellcheck="false"></label>
-          <ul class="res" id="wres"></ul>
-          <div class="muted" id="wmsg"></div>
+      <section class="card step" id="st1">
+        <h3>Layanan dan tanggal</h3><p class="sub">Pilih jenis layanan, lalu tanggal yang masih tersedia.</p>
+        <div class="fld" id="w-tgl">
+          <div class="seg" id="lay" role="group" aria-label="Layanan"></div>
+          <div id="days"></div>
+          <div class="e">Pilih tanggal kunjungan.</div>
         </div>
-        <div class="pick" id="wpick" hidden><b id="wnama"></b><button class="btn sm" type="button" id="wganti">Ganti</button></div>
-        <label class="f">Hubungan dengan WBP<select id="relasi" required><option value="">Pilih…</option></select></label>
-        <label class="f">Barang bawaan dan jumlah makanan<span class="h">Kosongkan jika tidak membawa apa-apa. Contoh: 1 tas pakaian, 2 kotak makanan</span><input type="text" id="barang" maxlength="300"></label>
-        <div class="hp" aria-hidden="true"><label>Situs web<input type="text" id="situs" tabindex="-1" autocomplete="off"></label></div>
-        <label class="chk"><input type="checkbox" id="setuju"><span>Data di atas benar. Saya setuju data dan foto ini dipakai petugas untuk layanan kunjungan dan dihapus otomatis setelah 30 hari.</span></label>
       </section>
 
-      <button class="btn pri" type="submit" id="kirim">Daftar</button>
+      <section class="card step" id="st2" hidden>
+        <h3>Data pengunjung</h3><p class="sub">Sesuai KTP. Ketik NIK lebih dulu, data lama akan terisi otomatis.</p>
+        <div class="fld" id="w-nik"><label for="nik">NIK<span class="h">16 angka di KTP. Dicetak di bukti pendaftaran dan dihapus otomatis setelah 30 hari.</span></label>
+          <input type="text" id="nik" inputmode="numeric" maxlength="16" autocomplete="off"><div class="e"></div></div>
+        <div class="msg ok" id="auto" hidden></div>
+        <div class="fld" id="w-nama"><label for="nama">Nama lengkap sesuai KTP</label><input type="text" id="nama" autocomplete="name" autocapitalize="characters" maxlength="60" required><div class="e"></div></div>
+        <div class="fld" id="w-jk"><label for="jk">Jenis kelamin</label><select id="jk"><option value="">Pilih…</option><option value="L">Laki-laki</option><option value="P">Perempuan</option></select><div class="e"></div></div>
+        <div class="fld" id="w-hp"><label for="hp">Nomor HP / WhatsApp<span class="h" id="hpH"></span></label><input type="tel" id="hp" inputmode="tel" autocomplete="tel" placeholder="08…" maxlength="16" required><div class="e"></div></div>
+        <div class="fld" id="w-alamat"><label for="alamat">Alamat lengkap<span class="h">Sesuai KTP atau tempat tinggal sekarang</span></label><input type="text" id="alamat" autocomplete="street-address" maxlength="150"><div class="e"></div></div>
+        <div class="fld" id="w-pk"><div class="lbl">Jumlah pengikut<span class="h">Orang yang datang bersama Anda, tidak termasuk Anda</span></div>
+          <div class="trio"><div><label for="pl">Laki-laki dewasa</label><select id="pl"></select></div><div><label for="pp">Perempuan dewasa</label><select id="pp"></select></div><div><label for="pa">Anak-anak</label><select id="pa"></select></div></div>
+          <div class="muted" id="pkMsg" style="margin-top:6px"></div><div class="e"></div></div>
+        <div class="fld" id="w-foto"><div class="lbl">Foto pengunjung<span class="h">Wajah jelas, tanpa kacamata hitam atau masker. Dicetak di bukti pendaftaran.</span></div>
+          <div class="fotorow"><div class="fotoprev" id="fotoPrev"><span>Belum ada foto</span></div>
+            <div class="fotoact"><input type="file" id="foto" accept="image/*" capture="user" hidden><input type="file" id="fotoGal" accept="image/*" hidden><button class="btn" type="button" id="fotoBtn">Ambil foto</button><button class="lnk" type="button" id="fotoGalBtn">atau pilih dari galeri</button><div class="muted" id="fotoMsg"></div></div></div>
+          <div class="e">Ambil atau pilih foto pengunjung.</div></div>
+      </section>
+
+      <section class="card step" id="st3" hidden>
+        <h3>WBP yang dikunjungi</h3><p class="sub">Cari nama WBP, lalu lengkapi hubungan dan barang bawaan.</p>
+        <div class="fld" id="w-wbp">
+          <div id="wbpCari"><label for="wq">Nama WBP<span class="h">Ketik minimal 3 huruf, lalu pilih dari daftar</span></label>
+            <input type="text" id="wq" autocomplete="off" autocapitalize="characters" spellcheck="false">
+            <ul class="res" id="wres"></ul><div class="muted" id="wmsg" style="margin-top:6px"></div></div>
+          <div class="pick" id="wpick" hidden><b id="wnama"></b><button class="btn sm" type="button" id="wganti">Ganti</button></div>
+          <div class="e">Cari dan pilih nama WBP.</div>
+        </div>
+        <div class="fld" id="w-relasi"><label for="relasi">Hubungan dengan WBP</label><select id="relasi" required><option value="">Pilih…</option></select><div class="e"></div></div>
+        <div class="fld"><label for="barang">Barang bawaan dan jumlah makanan<span class="h">Kosongkan jika tidak membawa apa-apa. Contoh: 1 tas pakaian, 2 kotak makanan</span></label><input type="text" id="barang" maxlength="300"></div>
+        <div class="hp" aria-hidden="true"><label>Situs web<input type="text" id="situs" tabindex="-1" autocomplete="off"></label></div>
+        <dl class="sum" id="ringkas"></dl>
+        <div class="fld" id="w-setuju"><label class="chk"><input type="checkbox" id="setuju"><span>Data di atas benar. Saya setuju data dan foto ini dipakai petugas untuk layanan kunjungan dan dihapus otomatis setelah 30 hari.</span></label><div class="e">Centang persetujuan data.</div></div>
+      </section>
+
       <div class="msg bad" id="msg" role="alert"></div>
+
+      <div class="bar" id="bar"><div class="in">
+        <button class="btn" type="button" id="back" hidden>Kembali</button>
+        <button class="btn pri big" type="button" id="next">Lanjut</button>
+      </div></div>
     </form>
   </div>
 </main>
+<div class="toasts" id="toasts" aria-live="polite"></div>
 
 <script src="config.js"></script>
 <script src="formulir.js"></script>
@@ -195,7 +204,8 @@ input:focus,select:focus,button:focus-visible{outline:2px solid var(--teal);outl
   var $ = function (id) { return document.getElementById(id); };
   var HARI = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', "Jum'at", 'Sabtu'];
   var BULAN = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-  var st = { info: null, tgl: '', lay: '', wbp: null, token: '', foto: '', kirim: false };
+  var st = { info: null, tgl: '', lay: '', wbp: null, token: '', foto: '', kirim: false, langkah: 1 };
+  Tema.mount($('tema'));
 
   function tglID(t, pendek) {
     var p = t.split('-'), d = new Date(Date.UTC(+p[0], +p[1] - 1, +p[2]));
@@ -208,6 +218,11 @@ input:focus,select:focus,button:focus-visible{outline:2px solid var(--teal);outl
     return e;
   }
   function ls(k, v) { try { if (v === undefined) return JSON.parse(localStorage.getItem(k) || 'null'); localStorage.setItem(k, JSON.stringify(v)); } catch (e) { return null; } }
+  function toast(t, kls) {
+    var n = el('div', { class: 'toast ' + (kls || ''), text: t }); $('toasts').append(n);
+    setTimeout(function () { n.classList.add('out'); setTimeout(function () { n.remove(); }, 300); }, 2600);
+  }
+  function getar() { try { if (navigator.vibrate) navigator.vibrate(12); } catch (e) { /* tidak didukung */ } }
 
   function rpc(op, args) {
     return fetch(window.API_URL, { method: 'POST', redirect: 'follow', credentials: 'omit', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ op: op, args: args || {} }) })
@@ -215,6 +230,72 @@ input:focus,select:focus,button:focus-visible{outline:2px solid var(--teal);outl
       .then(function (r) { if (r && r.error) throw r.error; return r; })
       .catch(function (e) { if (e && e.code) throw e; throw { code: 'unavailable', message: 'Server tidak bisa dihubungi. Periksa koneksi lalu coba lagi.' }; });
   }
+
+  /* ---------- langkah ---------- */
+  function setErr(w, msg) { var f = $(w); f.classList.add('bad'); if (msg) f.querySelector('.e').textContent = msg; }
+  function clrErr(w) { $(w).classList.remove('bad'); }
+  [['nik', 'w-nik'], ['nama', 'w-nama'], ['jk', 'w-jk'], ['hp', 'w-hp'], ['alamat', 'w-alamat'], ['relasi', 'w-relasi'], ['setuju', 'w-setuju']].forEach(function (p) {
+    $(p[0]).addEventListener('input', function () { clrErr(p[1]); }); $(p[0]).addEventListener('change', function () { clrErr(p[1]); });
+  });
+
+  function cek(n) {
+    var s = [];
+    function bad(w, m) { s.push([w, m]); }
+    var nik = $('nik').value, hp = $('hp').value.trim();
+    if (n === 1 && !st.tgl) bad('w-tgl');
+    if (n === 2) {
+      if (st.info.nik === 'hash' && !/^\d{16}$/.test(nik)) bad('w-nik', 'NIK harus 16 angka. Sekarang ' + nik.length + ' angka.');
+      if ($('nama').value.trim().length < 3) bad('w-nama', 'Isi nama lengkap sesuai KTP.');
+      if (!$('jk').value) bad('w-jk', 'Pilih jenis kelamin.');
+      if (!/^(\+?62|0)8[\d\s-]{7,14}$/.test(hp)) bad('w-hp', 'Nomor HP tidak valid. Contoh: 081234567890.');
+      if ($('alamat').value.trim().length < 5) bad('w-alamat', 'Isi alamat lengkap.');
+      if (+$('pl').value + +$('pp').value + +$('pa').value > st.info.maksPengikut) bad('w-pk', 'Jumlah pengikut paling banyak ' + st.info.maksPengikut + ' orang.');
+      if (!st.foto) bad('w-foto');
+    }
+    if (n === 3) {
+      if (!st.wbp) bad('w-wbp');
+      if (!$('relasi').value) bad('w-relasi', 'Pilih hubungan dengan WBP.');
+      if (!$('setuju').checked) bad('w-setuju');
+    }
+    return s;
+  }
+  function tampilError(s) {
+    ['w-tgl', 'w-nik', 'w-nama', 'w-jk', 'w-hp', 'w-alamat', 'w-pk', 'w-foto', 'w-wbp', 'w-relasi', 'w-setuju'].forEach(clrErr);
+    s.forEach(function (x) { setErr(x[0], x[1]); });
+    if (s.length) { var f = $(s[0][0]); f.scrollIntoView({ behavior: 'smooth', block: 'center' }); var i = f.querySelector('input:not([type=hidden]):not([type=file]),select'); if (i && i.type !== 'checkbox') setTimeout(function () { i.focus({ preventScroll: true }); }, 350); getar(); }
+  }
+  function ringkas() {
+    var d = $('ringkas'); d.textContent = '';
+    var lay = st.info.layanan.filter(function (l) { return l.id === st.lay; })[0];
+    [['Layanan', lay ? lay.nama : ''], ['Tanggal', st.tgl ? tglID(st.tgl) : ''], ['Pengunjung', $('nama').value.trim()]].forEach(function (r) { d.append(el('dt', { text: r[0] }), el('dd', { text: r[1] })); });
+  }
+  function ke(n, scroll) {
+    st.langkah = n;
+    [1, 2, 3].forEach(function (i) { $('st' + i).hidden = i !== n; });
+    var B = document.querySelectorAll('#steps .s'), L = document.querySelectorAll('#steps .l');
+    B.forEach(function (b, i) { b.classList.toggle('on', i + 1 === n); b.classList.toggle('done', i + 1 < n); b.firstChild.textContent = i + 1 < n ? '✓' : String(i + 1); });
+    L.forEach(function (l, i) { l.classList.toggle('on', i + 1 < n); });
+    $('back').hidden = n === 1; $('next').textContent = n === 3 ? 'Daftar' : 'Lanjut'; $('msg').textContent = '';
+    if (n === 3) ringkas();
+    if (scroll !== false) window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  function lanjut() {
+    if (st.kirim) return;
+    var s = cek(st.langkah); tampilError(s);
+    if (s.length) return;
+    if (st.langkah < 3) ke(st.langkah + 1); else kirim();
+  }
+  $('next').onclick = lanjut;
+  $('back').onclick = function () { ke(st.langkah - 1); };
+  $('f').addEventListener('submit', function (ev) { ev.preventDefault(); lanjut(); });
+  document.querySelectorAll('#steps .s').forEach(function (b) {
+    b.onclick = function () {
+      var n = +b.dataset.n;
+      if (n <= st.langkah) { ke(n); return; }
+      for (var i = st.langkah; i < n; i++) { var s = cek(i); if (s.length) { ke(i); tampilError(s); return; } }
+      ke(n);
+    };
+  });
 
   /* ---------- muat ---------- */
   function muat() {
@@ -232,8 +313,9 @@ input:focus,select:focus,button:focus-visible{outline:2px solid var(--teal);outl
         for (var i = 0; i <= r.maksPengikut; i++) sel.append(el('option', { value: String(i), text: i + ' orang' })); sel.value = cur;
       });
       $('pkMsg').textContent = 'Paling banyak ' + r.maksPengikut + ' orang pengikut.';
-      $('nikL').hidden = r.nik !== 'hash'; if (r.nik !== 'hash') $('auto').hidden = true;
-    }).catch(function (e) { $('load').textContent = e.message || 'Gagal memuat.'; $('load').append(el('div', { style: 'margin-top:10px' }, el('button', { class: 'btn', type: 'button', text: 'Coba lagi', onclick: function () { $('load').textContent = 'Memuat jadwal…'; muat(); } }))); });
+      $('w-nik').hidden = r.nik !== 'hash'; if (r.nik !== 'hash') $('auto').hidden = true;
+      if (!st.mulai) { st.mulai = true; ke(1, false); }
+    }).catch(function (e) { $('load').textContent = e.message || 'Gagal memuat.'; $('load').hidden = false; $('load').append(el('div', { style: 'margin-top:10px' }, el('button', { class: 'btn', type: 'button', text: 'Coba lagi', onclick: function () { $('load').textContent = ''; $('load').append(el('div', { class: 'skel', style: 'height:140px' })); muat(); } }))); });
   }
 
   function gambarLay() {
@@ -267,7 +349,7 @@ input:focus,select:focus,button:focus-visible{outline:2px solid var(--teal);outl
       if (d && T[0].tgl === t) kls += ' today';
       (function (t) {
         g.append(el('button', { type: 'button', class: kls, 'aria-pressed': String(st.tgl === t), disabled: ok ? null : 'disabled',
-          'aria-label': tglID(t) + (!d ? ', tidak tersedia' : !d.buka ? ', tutup' : sisa <= 0 ? ', penuh' : ', sisa ' + sisa), onclick: function () { st.tgl = t; gambarHari(); } },
+          'aria-label': tglID(t) + (!d ? ', tidak tersedia' : !d.buka ? ', tutup' : sisa <= 0 ? ', penuh' : ', sisa ' + sisa), onclick: function () { st.tgl = t; clrErr('w-tgl'); getar(); gambarHari(); } },
           [el('b', { text: String(n) }), el('span', { text: !d ? '' : !d.buka ? 'Tutup' : sisa <= 0 ? 'Penuh' : 'Sisa ' + sisa })]));
       })(t);
     }
@@ -275,7 +357,7 @@ input:focus,select:focus,button:focus-visible{outline:2px solid var(--teal);outl
     box.append(el('div', { class: 'cal-leg' }, [
       el('span', null, [el('i', { style: 'background:var(--okbg);border:1px solid var(--ok)' }), 'Tersedia']),
       el('span', null, [el('i', { style: 'background:var(--badbg)' }), 'Penuh']),
-      el('span', null, [el('i', { style: 'background:var(--teal)' }), 'Dipilih'])]));
+      el('span', null, [el('i', { style: 'background:var(--accent)' }), 'Dipilih'])]));
     var pilih = st.tgl && map[st.tgl];
     box.append(el('div', { class: 'cal-sum', text: pilih ? tglID(st.tgl) + ' · sisa kuota ' + pilih.sisa[st.lay] : 'Pilih tanggal kunjungan' }));
   }
@@ -298,7 +380,7 @@ input:focus,select:focus,button:focus-visible{outline:2px solid var(--teal);outl
       }).catch(function (e) { if (n === urut) $('wmsg').textContent = e.message; });
     }, 350);
   });
-  function pilihWbp(w) { st.wbp = w; $('wnama').textContent = w.n; $('wpick').hidden = false; $('wbpCari').hidden = true; }
+  function pilihWbp(w) { st.wbp = w; clrErr('w-wbp'); $('wnama').textContent = w.n; $('wpick').hidden = false; $('wbpCari').hidden = true; getar(); }
   $('wganti').onclick = function () { st.wbp = null; $('wpick').hidden = true; $('wbpCari').hidden = false; $('wq').focus(); };
 
   /* ---------- foto: dikecilkan di perangkat (maks. 480 px, JPEG) supaya muat disimpan ---------- */
@@ -317,7 +399,7 @@ input:focus,select:focus,button:focus-visible{outline:2px solid var(--teal);outl
       var q = 0.8, b64 = '';
       do { b64 = c.toDataURL('image/jpeg', q).split(',')[1]; q -= 0.1; } while (b64.length > 45000 && q > 0.2);
       if (b64.length > 48000) { $('fotoMsg').textContent = 'Foto terlalu besar. Coba foto lain.'; return; }
-      st.foto = b64; $('fotoPrev').textContent = ''; $('fotoPrev').append(el('img', { src: 'data:image/jpeg;base64,' + b64, alt: 'Foto pengunjung' })); $('fotoMsg').textContent = 'Foto siap.';
+      st.foto = b64; clrErr('w-foto'); $('fotoPrev').textContent = ''; $('fotoPrev').classList.add('has'); $('fotoPrev').append(el('img', { src: 'data:image/jpeg;base64,' + b64, alt: 'Foto pengunjung' })); $('fotoMsg').textContent = 'Foto siap. Ambil ulang jika kurang jelas.'; $('fotoBtn').textContent = 'Ambil ulang';
     };
     img.onerror = function () { URL.revokeObjectURL(url); $('fotoMsg').textContent = 'Berkas bukan gambar yang bisa dibaca.'; };
     img.src = url;
@@ -332,8 +414,9 @@ input:focus,select:focus,button:focus-visible{outline:2px solid var(--teal);outl
     $('auto').hidden = true;
     if (this.value.length !== 16 || this.value === nikTerakhir) return;
     nikTerakhir = this.value;
+    $('auto').className = 'msg info'; $('auto').textContent = 'Memeriksa pendaftaran sebelumnya…'; $('auto').hidden = false;
     rpc('kj.nik', { nik: this.value }).then(function (r) {
-      if (!r.ada) return;
+      if (!r.ada) { $('auto').hidden = true; return; }
       var diisi = [];
       if (!$('nama').value.trim()) { $('nama').value = r.nama; diisi.push('nama'); }
       if (!st.wbp && r.wbp) { pilihWbp(r.wbp); diisi.push('WBP'); }
@@ -344,34 +427,28 @@ input:focus,select:focus,button:focus-visible{outline:2px solid var(--teal);outl
       var hp = ls('kjHp');
       if (!$('hp').value && hp && hp.indexOf(r.hp_awal) === 0 && hp.slice(-3) === r.hp_akhir) { $('hp').value = hp; diisi.push('HP'); }
       else if (!$('hp').value) $('hpH').textContent = 'Terdaftar sebelumnya: ' + r.hp_awal + '•••••' + r.hp_akhir + '. Isi lagi nomor lengkapnya.';
-      $('auto').textContent = 'Data dari pendaftaran sebelumnya sudah terisi. Periksa lalu pilih tanggal dan layanan.'; $('auto').hidden = false;
-    }).catch(function () { /* isi manual saja */ });
+      ['w-nama', 'w-jk', 'w-hp', 'w-alamat', 'w-relasi'].forEach(clrErr);
+      $('auto').className = 'msg ok'; $('auto').textContent = 'Data dari pendaftaran sebelumnya sudah terisi. Periksa lalu lanjutkan.'; $('auto').hidden = false;
+    }).catch(function () { $('auto').hidden = true; /* isi manual saja */ });
   });
   $('nama').addEventListener('input', function () { var p = this.selectionStart; this.value = this.value.toUpperCase(); this.setSelectionRange(p, p); });
 
   /* ---------- kirim ---------- */
-  $('f').addEventListener('submit', function (ev) {
-    ev.preventDefault();
-    if (st.kirim) return;
+  function kirim() {
     var m = $('msg'); m.textContent = '';
     var data = { tgl: st.tgl, layanan: st.lay, wbp: st.wbp && st.wbp.k, relasi: $('relasi').value, nama: $('nama').value.trim(), nik: $('nik').value, hp: $('hp').value, jk: $('jk').value, alamat: $('alamat').value.trim(), pl: $('pl').value, pp: $('pp').value, pa: $('pa').value, barang: $('barang').value.trim(), foto: st.foto, situs: $('situs').value, token: st.token };
-    var salah = !data.tgl ? 'Pilih tanggal kunjungan.' : !data.wbp ? 'Cari dan pilih nama WBP.' : !data.relasi ? 'Pilih hubungan dengan WBP.' : data.nama.length < 3 ? 'Isi nama lengkap sesuai KTP.' :
-      (st.info.nik === 'hash' && !/^\d{16}$/.test(data.nik)) ? 'NIK harus 16 angka.' : !/^(\+?62|0)8[\d\s-]{7,14}$/.test(data.hp.trim()) ? 'Nomor HP tidak valid. Contoh: 081234567890.' : !data.jk ? 'Pilih jenis kelamin.' : data.alamat.length < 5 ? 'Isi alamat lengkap.' :
-      (+data.pl + +data.pp + +data.pa) > st.info.maksPengikut ? 'Jumlah pengikut paling banyak ' + st.info.maksPengikut + ' orang.' : !data.foto ? 'Ambil atau pilih foto pengunjung.' :
-      !$('setuju').checked ? 'Centang persetujuan data.' : '';
-    if (salah) { m.textContent = salah; return; }
-    st.kirim = true; $('kirim').disabled = true; $('kirim').textContent = 'Mengirim…';
+    st.kirim = true; $('next').disabled = true; $('back').disabled = true; $('next').classList.add('load'); $('next').textContent = 'Mengirim…';
     rpc('kj.daftar', data).then(function (r) {
       simpanTiket(r.tiket, data.hp.replace(/\D/g, '').slice(-4));
       ls('kjHp', data.hp.replace(/[\s\-().]/g, '').replace(/^\+?62/, '0'));
-      var fotoKirim = st.foto; st.foto = ''; $('fotoPrev').textContent = 'Belum ada foto'; $('fotoMsg').textContent = '';
-      $('f').reset(); nikTerakhir = ''; $('auto').hidden = true; $('hpH').textContent = ''; st.wbp = null; $('wpick').hidden = true; $('wbpCari').hidden = false; $('wres').textContent = '';
-      tampilTiket(r.tiket, true, fotoKirim);
+      var fotoKirim = st.foto; st.foto = ''; $('fotoPrev').textContent = 'Belum ada foto'; $('fotoPrev').classList.remove('has'); $('fotoMsg').textContent = ''; $('fotoBtn').textContent = 'Ambil foto';
+      $('f').reset(); nikTerakhir = ''; $('auto').hidden = true; $('hpH').textContent = ''; st.wbp = null; st.tgl = ''; $('wpick').hidden = true; $('wbpCari').hidden = false; $('wres').textContent = '';
+      tampilTiket(r.tiket, true, fotoKirim); getar();
     }).catch(function (e) {
-      m.textContent = e.message || 'Pendaftaran gagal.';
-      if (e.code === 'captcha' || e.code === 'invalid_argument') muat();
-    }).then(function () { st.kirim = false; $('kirim').disabled = false; $('kirim').textContent = 'Daftar'; });
-  });
+      m.textContent = e.message || 'Pendaftaran gagal.'; m.scrollIntoView({ behavior: 'smooth', block: 'center' }); getar();
+      if (e.code === 'captcha' || e.code === 'invalid_argument') { var pesan = m.textContent; muat().then(function () { m.textContent = pesan; }); }
+    }).then(function () { st.kirim = false; $('next').disabled = false; $('back').disabled = false; $('next').classList.remove('load'); $('next').textContent = st.langkah === 3 ? 'Daftar' : 'Lanjut'; });
+  }
 
   /* ---------- tiket ---------- */
   function simpanTiket(t, hp4) {
@@ -387,31 +464,36 @@ input:focus,select:focus,button:focus-visible{outline:2px solid var(--teal);outl
     for (var r = 0; r < n; r++) for (var k = 0; k < n; k++) if (q.isDark(r, k)) x.fillRect((k + pad) * s, (r + pad) * s, s, s);
     return c;
   }
+  function centang() {
+    var s = document.createElementNS('http://www.w3.org/2000/svg', 'svg'), p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    s.setAttribute('viewBox', '0 0 24 24'); s.setAttribute('aria-hidden', 'true'); p.setAttribute('d', 'M5 12.5l4.5 4.5L19 7.5'); s.appendChild(p); return s;
+  }
   function tampilTiket(t, baru, foto) {
     var box = $('tiketBox'); box.textContent = ''; box.hidden = false;
     $('form').hidden = true;
     var cv = qrCanvas(t.kode);
     var stt = { daftar: 'Terdaftar', hadir: 'Sudah hadir', batal: 'Dibatalkan' }[t.status] || t.status;
     box.append(el('div', { class: 'card tiket' }, [
-      baru ? el('div', { class: 'msg ok', style: 'margin:0 0 12px', text: 'Pendaftaran berhasil. Simpan atau foto layar tiket ini.' }) : null,
+      baru ? el('div', { class: 'ck' }, centang()) : null,
+      baru ? el('div', { class: 'msg ok', style: 'margin:0 0 12px;justify-content:center', text: 'Pendaftaran berhasil. Simpan atau foto layar tiket ini.' }) : null,
       el('div', { class: 'lay', text: t.layananNama }),
       el('div', { class: 'no', text: t.no }),
       el('div', { class: 'tg', text: tglID(t.tgl) }),
       el('div', { class: 'qr' }, cv),
       el('div', { class: 'kd', text: t.kode }),
-      el('div', { style: 'margin-top:6px' }, el('span', { class: 'badge ' + t.status, text: stt })),
+      el('div', { style: 'margin-top:8px' }, el('span', { class: 'badge ' + t.status, text: stt })),
       el('dl', null, [el('dt', { text: 'Pengunjung' }), el('dd', { text: t.nama + (t.pengikut ? ' + ' + t.pengikut + ' pengikut' : '') }), el('dt', { text: 'WBP' }), el('dd', { text: t.wbp }), el('dt', { text: 'Hubungan' }), el('dd', { text: t.relasi })]),
-      el('p', { class: 'muted', text: 'Tunjukkan QR ini dan KTP asli ke petugas. Nomor antrian berlaku hanya pada tanggal di atas.' }),
+      el('p', { class: 'muted', style: 'margin-top:12px', text: 'Tunjukkan QR ini dan KTP asli ke petugas. Nomor antrian berlaku hanya pada tanggal di atas.' }),
       el('div', { class: 'acts' }, [
-        el('button', { class: 'btn', type: 'button', text: 'Simpan gambar', onclick: function () { unduh(t, cv); } }),
+        el('button', { class: 'btn pri', type: 'button', text: 'Simpan gambar', onclick: function () { unduh(t, cv); toast('Gambar tiket disimpan', 'ok'); } }),
         el('button', { class: 'btn', type: 'button', text: 'Cetak A4', onclick: function () { cetak(t, foto, 'A4'); } }),
         el('button', { class: 'btn', type: 'button', text: 'Cetak A5', onclick: function () { cetak(t, foto, 'A5'); } }),
-        el('button', { class: 'btn', type: 'button', text: 'Daftar lagi', onclick: function () { box.hidden = true; $('form').hidden = false; gambarSaya(); muat(); window.scrollTo(0, 0); } })
+        el('button', { class: 'btn', type: 'button', text: 'Daftar lagi', onclick: function () { box.hidden = true; $('form').hidden = false; ke(1, false); gambarSaya(); muat(); window.scrollTo(0, 0); } })
       ])
     ]));
     window.scrollTo(0, 0);
   }
-  function cetak(t, foto, ukuran) { Formulir.cetak(t, foto, ukuran).catch(function (e) { $('tiketBox').append(el('div', { class: 'msg bad', text: e.message })); }); }
+  function cetak(t, foto, ukuran) { Formulir.cetak(t, foto, ukuran).catch(function (e) { toast(e.message, 'bad'); }); }
   function unduh(t, qr) {
     var W = 600, H = 860, c = document.createElement('canvas'); c.width = W; c.height = H;
     var x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, W, H); x.fillStyle = '#1E272D'; x.textAlign = 'center';
@@ -430,8 +512,10 @@ input:focus,select:focus,button:focus-visible{outline:2px solid var(--teal);outl
   $('bukaCari').onclick = function () { $('cari').hidden = !$('cari').hidden; if (!$('cari').hidden) $('cKode').focus(); };
   function buka(kode, hp4) {
     $('cMsg').textContent = '';
+    $('cGo').classList.add('load');
     return rpc('kj.tiket', { kode: kode, hp4: hp4 }).then(function (r) { simpanTiket(r.tiket, hp4); tampilTiket(r.tiket, false, r.foto); })
-      .catch(function (e) { $('cari').hidden = false; $('cMsg').className = 'msg bad'; $('cMsg').textContent = e.message; });
+      .catch(function (e) { $('cari').hidden = false; $('cMsg').className = 'msg bad'; $('cMsg').textContent = e.message; })
+      .then(function () { $('cGo').classList.remove('load'); });
   }
   $('cGo').onclick = function () { buka($('cKode').value.trim().toUpperCase(), $('cHp').value.trim()); };
   function gambarSaya() {
