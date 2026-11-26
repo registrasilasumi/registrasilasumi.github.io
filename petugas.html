@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Petugas Kunjungan – Lapas Sukamiskin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Panel petugas pendaftaran kunjungan (dirancang untuk tablet). Kode akses KODE_KUNJUNGAN atau kode editor.
+   Kode akses disimpan di localStorage perangkat ini sampai petugas menekan Keluar. */
+:root{
+  --bg:#EBEDEF;--panel:#FFFFFF;--top:#DCE0E3;--ink:#1E272D;--ink2:#4E5B64;--ink3:#76838C;--line:#CDD3D8;
+  --accent:#46576A;--accentbg:#E3E8EC;--teal:#1F6F6B;--tealbg:#DDEDEB;
+  --ok:#2E6B3B;--okbg:#E3F0E4;--warn:#80530A;--warnbg:#F7EACB;--bad:#9A2C2C;--badbg:#F6E0DE;
+  --font:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;--mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#12171B;--panel:#1B2227;--top:#222B31;--ink:#E8EDF0;--ink2:#AEB9C0;--ink3:#82909A;--line:#303B43;
+  --accent:#8FA6BD;--accentbg:#27323A;--teal:#55B3AD;--tealbg:#1D3331;
+  --ok:#7CC48C;--okbg:#1F3425;--warn:#E3B565;--warnbg:#3A2E14;--bad:#E59090;--badbg:#3E2222;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12171B;--panel:#1B2227;--top:#222B31;--ink:#E8EDF0;--ink2:#AEB9C0;--ink3:#82909A;--line:#303B43;
+  --accent:#8FA6BD;--accentbg:#27323A;--teal:#55B3AD;--tealbg:#1D3331;
+  --ok:#7CC48C;--okbg:#1F3425;--warn:#E3B565;--warnbg:#3A2E14;--bad:#E59090;--badbg:#3E2222;color-scheme:dark}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:100vh;font-size:16px;line-height:1.4}
+button,select,input{font:inherit;color:inherit}
+button{cursor:pointer}
+header{display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--top);border-bottom:1px solid var(--line);flex-wrap:wrap}
+header .t small{display:block;font-size:11px;letter-spacing:.08em;color:var(--ink2);font-weight:600;text-transform:uppercase}
+header .t b{font-size:18px}
+nav{display:flex;gap:6px;margin-left:auto;flex-wrap:wrap}
+nav button{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:10px 16px;font-weight:600;font-size:15px}
+nav button[aria-current=page]{background:var(--teal);border-color:var(--teal);color:#fff}
+main{padding:16px;max-width:1200px;margin:0 auto}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px;min-width:0}
+.card h2{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink2);font-weight:600;margin-bottom:10px}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+input[type=text],input[type=password],input[type=date],input[type=number],input[type=time],select{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:10px 12px;font-size:16px;min-width:0}
+input:focus,select:focus,button:focus-visible{outline:2px solid var(--teal);outline-offset:1px}
+.btn{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:10px 16px;font-weight:600}
+.btn:hover{background:var(--accentbg)}
+.btn.pri{background:var(--teal);border-color:var(--teal);color:#fff}
+.btn.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+.btn.big{font-size:20px;padding:16px 22px}
+.btn.sm{padding:6px 10px;font-size:13px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.bar input[type=text]{flex:1 1 220px}
+.msg{border-radius:10px;padding:10px 12px;font-size:14px;margin-top:10px}
+.msg:empty{display:none}
+.msg.bad{background:var(--badbg);color:var(--bad)}.msg.ok{background:var(--okbg);color:var(--ok)}.msg.warn{background:var(--warnbg);color:var(--warn)}
+.muted{color:var(--ink3);font-size:13px}
+/* login */
+.login{max-width:380px;margin:60px auto}
+.login input{width:100%;margin:10px 0}
+/* scan */
+.cam{position:relative;background:#000;border-radius:10px;overflow:hidden;aspect-ratio:4/3}
+.cam video{width:100%;height:100%;object-fit:cover;display:block}
+.cam .box{position:absolute;inset:18%;border:3px solid rgba(255,255,255,.85);border-radius:14px;box-shadow:0 0 0 999px rgba(0,0,0,.35)}
+.cam .off{position:absolute;inset:0;display:grid;place-items:center;color:#fff;text-align:center;padding:20px}
+.hasil .no{font-family:var(--mono);font-size:56px;font-weight:700;color:var(--teal);line-height:1}
+.hasil .nm{font-size:22px;font-weight:700;margin-top:6px}
+.hasil dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:12px 0;font-size:15px}
+.hasil dt{color:var(--ink3)}.hasil dd{font-weight:600;overflow-wrap:anywhere}
+.badge{display:inline-block;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700;white-space:nowrap}
+.badge.hadir{background:var(--okbg);color:var(--ok)}.badge.batal{background:var(--badbg);color:var(--bad)}.badge.daftar{background:var(--accentbg);color:var(--accent)}
+/* tabel */
+.stats{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
+.stat{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:13px;color:var(--ink2)}
+.stat b{display:block;font-family:var(--mono);font-size:20px;color:var(--ink)}
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;font-size:12px;color:var(--ink3);font-weight:600;padding:8px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:8px;border-bottom:1px solid var(--line);vertical-align:middle}
+td.mono{font-family:var(--mono);white-space:nowrap}
+tr.hadir td{background:color-mix(in srgb,var(--okbg) 55%,transparent)}
+tr.batal td{opacity:.55}
+.set label{display:block;font-size:14px;font-weight:600;margin-top:12px}
+.set label input,.set label select{display:block;margin-top:4px;width:100%}
+.hari{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.hari label{display:flex;gap:6px;align-items:center;font-weight:500;margin:0;border:1px solid var(--line);border-radius:8px;padding:6px 10px}
+.hari input{width:auto;margin:0}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.chip{display:flex;gap:6px;align-items:center;background:var(--accentbg);border-radius:999px;padding:4px 6px 4px 12px;font-size:13px}
+.chip button{border:none;background:none;font-weight:700;padding:0 6px}
+[hidden]{display:none!important}
+@media(max-width:820px){.grid2{grid-template-columns:1fr}nav{margin-left:0;width:100%}nav button{flex:1;padding:10px 8px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="t"><small>Lapas Kelas I Sukamiskin</small><b>Petugas Kunjungan</b></div>
+  <nav id="nav" hidden>
+    <button data-v="scan">Scan &amp; Cari</button><button data-v="harian">Daftar Harian</button><button data-v="atur">Pengaturan</button><button id="keluar">Keluar</button>
+  </nav>
+</header>
+<main id="main"></main>
+
+<script src="config.js"></script>
+<script>
+(function () {
+  'use strict';
+  var HARI = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', "Jum'at", 'Sabtu'];
+  var BULAN = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+  var LAY = { tatap: 'Tatap muka', titip: 'Penitipan' };
+  var ST = { daftar: 'Terdaftar', hadir: 'Hadir', batal: 'Batal' };
+  var kode = '', view = 'scan', main = document.getElementById('main');
+  var cam = { stream: null, timer: null, det: null, last: '', lastAt: 0 };
+  var harian = { tgl: hariIni(), lay: '', st: '', q: '', data: null, timer: null };
+
+  function hariIni(plus) { return new Date(Date.now() + 7 * 3600000 + (plus || 0) * 86400000).toISOString().slice(0, 10); }
+  function tglID(t) { var p = t.split('-'), d = new Date(Date.UTC(+p[0], +p[1] - 1, +p[2])); return HARI[d.getUTCDay()] + ', ' + (+p[2]) + ' ' + BULAN[+p[1] - 1] + ' ' + p[0]; }
+  function jam(iso) { if (!iso) return ''; var d = new Date(new Date(iso).getTime() + 7 * 3600000); return d.toISOString().slice(11, 16); }
+  function el(tag, attrs, kids) {
+    var e = document.createElement(tag);
+    for (var k in attrs || {}) { if (k === 'text') e.textContent = attrs[k]; else if (k.slice(0, 2) === 'on') e.addEventListener(k.slice(2), attrs[k]); else if (attrs[k] != null) e.setAttribute(k, attrs[k]); }
+    [].concat(kids || []).forEach(function (c) { if (c != null) e.append(c); });
+    return e;
+  }
+  function ls(k, v) { try { if (v === undefined) return localStorage.getItem(k) || ''; if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) { return ''; } }
+  function rpc(op, args) {
+    return fetch(window.API_URL, { method: 'POST', redirect: 'follow', credentials: 'omit', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ kode: kode, op: op, args: args || {} }) })
+      .then(function (r) { if (!r.ok) throw new Error('Server membalas ' + r.status); return r.json(); })
+      .then(function (r) { if (r && r.error) { if (r.error.code === 'login_failed') keluar(r.error.message); throw r.error; } return r; })
+      .catch(function (e) { if (e && e.code) throw e; throw { code: 'unavailable', message: 'Server tidak bisa dihubungi.' }; });
+  }
+
+  /* ---------- login ---------- */
+  function layarLogin(pesan) {
+    document.getElementById('nav').hidden = true;
+    main.textContent = '';
+    var inp = el('input', { type: 'password', placeholder: 'Kode akses petugas', autocomplete: 'current-password', 'aria-label': 'Kode akses' });
+    var m = el('div', { class: 'msg bad', text: pesan || '' });
+    var b = el('button', { class: 'btn pri', type: 'submit', text: 'Masuk', style: 'width:100%' });
+    main.append(el('form', { class: 'card login', onsubmit: function (e) {
+      e.preventDefault(); kode = inp.value.trim(); if (!kode) return;
+      b.disabled = true; m.textContent = '';
+      rpc('kj.login').then(function () { ls('kjKode', kode); mulai(); }).catch(function (e) { m.textContent = e.message; b.disabled = false; });
+    } }, [el('h2', { text: 'Masuk petugas' }), inp, b, m]));
+    inp.focus();
+  }
+  function keluar(pesan) { stopCam(); clearInterval(harian.timer); kode = ''; ls('kjKode', null); layarLogin(pesan); }
+  document.getElementById('keluar').onclick = function () { keluar(); };
+  [].forEach.call(document.querySelectorAll('nav [data-v]'), function (b) { b.onclick = function () { tampil(b.dataset.v); }; });
+
+  function mulai() { document.getElementById('nav').hidden = false; tampil(view); }
+  function tampil(v) {
+    view = v; stopCam(); clearInterval(harian.timer);
+    [].forEach.call(document.querySelectorAll('nav [data-v]'), function (b) { if (b.dataset.v === v) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
+    main.textContent = '';
+    if (v === 'scan') vScan(); else if (v === 'harian') vHarian(); else vAtur();
+  }
+
+  /* ---------- kartu hasil + tandai hadir ---------- */
+  function kartu(r, onUbah) {
+    var hariini = r.tgl === hariIni();
+    var m = el('div', { class: 'msg' });
+    if (!hariini) { m.className = 'msg warn'; m.textContent = 'Pendaftaran ini untuk ' + tglID(r.tgl) + ', bukan hari ini.'; }
+    else if (r.status === 'hadir') { m.className = 'msg ok'; m.textContent = 'Sudah ditandai hadir pukul ' + jam(r.hadir_at) + '.'; }
+    else if (r.status === 'batal') { m.className = 'msg bad'; m.textContent = 'Pendaftaran ini dibatalkan.'; }
+    function ubah(s, b) {
+      b.disabled = true;
+      rpc('kj.hadir', { kode: r.kode, status: s }).then(function (x) { onUbah(x.row); }).catch(function (e) { m.className = 'msg bad'; m.textContent = e.message; b.disabled = false; });
+    }
+    var acts = el('div', { class: 'bar' });
+    if (r.status !== 'hadir') { var bh = el('button', { class: 'btn ok big', text: 'Tandai hadir', onclick: function () { ubah('hadir', bh); } }); acts.append(bh); }
+    else { var bu = el('button', { class: 'btn', text: 'Batalkan tanda hadir', onclick: function () { ubah('daftar', bu); } }); acts.append(bu); }
+    if (r.status !== 'batal') { var bb = el('button', { class: 'btn', text: 'Batalkan pendaftaran', onclick: function () { if (confirmInline(bb)) ubah('batal', bb); } }); acts.append(bb); }
+    return el('div', { class: 'card hasil' }, [
+      el('div', { class: 'bar', style: 'justify-content:space-between' }, [el('div', { class: 'no', text: r.no }), el('span', { class: 'badge ' + r.status, text: ST[r.status] || r.status })]),
+      el('div', { class: 'nm', text: r.nama + (r.pengikut ? '  +' + r.pengikut : '') }),
+      el('dl', null, [
+        el('dt', { text: 'Layanan' }), el('dd', { text: r.layananNama }),
+        el('dt', { text: 'Tanggal' }), el('dd', { text: tglID(r.tgl) }),
+        el('dt', { text: 'WBP' }), el('dd', { text: r.wbp + ' (' + r.wbp_reg + ')' }),
+        el('dt', { text: 'Hubungan' }), el('dd', { text: r.relasi }),
+        el('dt', { text: 'NIK' }), el('dd', { text: r.nik4 ? '•••• •••• •••• ' + r.nik4 : '–' }),
+        el('dt', { text: 'HP' }), el('dd', { text: r.hp }),
+        el('dt', { text: 'Kode' }), el('dd', { text: r.kode, style: 'font-family:var(--mono)' })
+      ]),
+      el('p', { class: 'muted', text: 'Cocokkan nama dan 4 angka akhir NIK dengan KTP asli.' }),
+      m, el('div', { style: 'margin-top:10px' }, acts)
+    ]);
+  }
+  // konfirmasi tanpa dialog browser: tekan dua kali
+  function confirmInline(b) {
+    if (b.dataset.yakin) return true;
+    b.dataset.yakin = '1'; var t = b.textContent; b.textContent = 'Tekan lagi untuk yakin';
+    setTimeout(function () { delete b.dataset.yakin; b.textContent = t; }, 3000);
+    return false;
+  }
+
+  /* ---------- Scan & Cari ---------- */
+  function vScan() {
+    var video = el('video', { playsinline: '', muted: '', autoplay: '' });
+    var off = el('div', { class: 'off' }, el('button', { class: 'btn pri big', text: 'Nyalakan kamera', onclick: function () { startCam(video, off, cari); } }));
+    var q = el('input', { type: 'text', placeholder: 'Kode KJ…, NIK, nomor HP, atau nama', 'aria-label': 'Cari', autocapitalize: 'characters', autocomplete: 'off' });
+    var out = el('div'), m = el('div', { class: 'msg bad' });
+    function cari(teks) {
+      teks = String(teks || '').trim(); if (!teks) return;
+      m.textContent = ''; out.textContent = ''; out.append(el('div', { class: 'card muted', text: 'Mencari ' + teks + '…' }));
+      rpc('kj.cari', { q: teks }).then(function (r) {
+        out.textContent = '';
+        if (!r.rows.length) { out.append(el('div', { class: 'msg bad', text: 'Tidak ditemukan: ' + teks })); return; }
+        // urutkan: hari ini dulu
+        var T = hariIni(), rows = r.rows.slice().sort(function (a, b) { return (b.tgl === T) - (a.tgl === T); });
+        if (rows.length === 1 || /^KJ[A-Z0-9]{6}$/.test(teks.toUpperCase())) return tampilSatu(rows[0]);
+        var tb = el('tbody');
+        rows.forEach(function (x) {
+          tb.append(el('tr', { class: x.status }, [el('td', { class: 'mono', text: x.no }), el('td', { text: x.tgl === T ? 'Hari ini' : tglID(x.tgl) }), el('td', { text: x.nama }), el('td', { text: x.wbp }), el('td', null, el('span', { class: 'badge ' + x.status, text: ST[x.status] })), el('td', null, el('button', { class: 'btn sm', text: 'Buka', onclick: function () { tampilSatu(x); } }))]));
+        });
+        out.append(el('div', { class: 'card' }, [el('h2', { text: rows.length + ' hasil' }), el('div', { class: 'tw' }, el('table', null, [el('thead', null, el('tr', null, ['No', 'Tanggal', 'Pengunjung', 'WBP', 'Status', ''].map(function (t) { return el('th', { text: t }); }))), tb]))]));
+      }).catch(function (e) { out.textContent = ''; m.textContent = e.message; });
+    }
+    function tampilSatu(x) { out.textContent = ''; out.append(kartu(x, tampilSatu)); }
+    main.append(el('div', { class: 'grid2' }, [
+      el('div', null, [
+        el('div', { class: 'card' }, [el('h2', { text: 'Scan QR tiket' }), el('div', { class: 'cam' }, [video, el('div', { class: 'box' }), off]), el('p', { class: 'muted', style: 'margin-top:8px', text: 'Arahkan QR di HP pengunjung ke dalam kotak. Hasil muncul otomatis.' })]),
+        el('form', { class: 'card', onsubmit: function (e) { e.preventDefault(); cari(q.value); } }, [el('h2', { text: 'Cari manual' }), el('div', { class: 'bar' }, [q, el('button', { class: 'btn pri', type: 'submit', text: 'Cari' })]), m])
+      ]),
+      out
+    ]));
+    if (ls('kjKamera') === '1') startCam(video, off, cari);
+  }
+
+  function startCam(video, off, onKode) {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { off.textContent = 'Kamera tidak tersedia di peramban ini. Pakai pencarian manual.'; return; }
+    off.textContent = 'Menyalakan kamera…';
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: { ideal: 1280 } }, audio: false }).then(function (s) {
+      cam.stream = s; video.srcObject = s; return video.play();
+    }).then(function () {
+      off.hidden = true; ls('kjKamera', '1');
+      return siapkanDetektor();
+    }).then(function (det) {
+      var cv = document.createElement('canvas'), cx = cv.getContext('2d', { willReadFrequently: true });
+      cam.timer = setInterval(function () {
+        if (!video.videoWidth) return;
+        var p = det.native ? det.native.detect(video).then(function (r) { return r[0] && r[0].rawValue; }) : new Promise(function (ok) {
+          var w = 640, h = Math.round(video.videoHeight * w / video.videoWidth); cv.width = w; cv.height = h; cx.drawImage(video, 0, 0, w, h);
+          var r = window.jsQR(cx.getImageData(0, 0, w, h).data, w, h, { inversionAttempts: 'dontInvert' }); ok(r && r.data);
+        });
+        p.then(function (txt) {
+          if (!txt) return;
+          txt = String(txt).trim().toUpperCase();
+          var m = txt.match(/KJ[A-Z0-9]{6}/); if (!m) return;
+          if (m[0] === cam.last && Date.now() - cam.lastAt < 6000) return;
+          cam.last = m[0]; cam.lastAt = Date.now();
+          if (navigator.vibrate) navigator.vibrate(80);
+          onKode(m[0]);
+        }).catch(function () {});
+      }, 300);
+    }).catch(function (e) {
+      off.hidden = false; ls('kjKamera', null);
+      off.textContent = ''; off.append(el('div', null, [el('div', { text: 'Kamera tidak bisa dibuka: ' + (e && e.message || e) }), el('button', { class: 'btn', style: 'margin-top:10px', text: 'Coba lagi', onclick: function () { startCam(video, off, onKode); } })]));
+    });
+  }
+  function siapkanDetektor() {
+    if ('BarcodeDetector' in window) {
+      return window.BarcodeDetector.getSupportedFormats().then(function (f) {
+        if (f.indexOf('qr_code') >= 0) return { native: new window.BarcodeDetector({ formats: ['qr_code'] }) };
+        return muatJsQR();
+      }).catch(muatJsQR);
+    }
+    return muatJsQR();
+  }
+  function muatJsQR() {
+    if (window.jsQR) return Promise.resolve({});
+    return new Promise(function (ok, no) {
+      var s = document.createElement('script'); s.src = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js';
+      s.onload = function () { ok({}); }; s.onerror = function () { no(new Error('pembaca QR gagal dimuat')); }; document.head.append(s);
+    });
+  }
+  function stopCam() {
+    clearInterval(cam.timer); cam.timer = null;
+    if (cam.stream) cam.stream.getTracks().forEach(function (t) { t.stop(); });
+    cam.stream = null;
+  }
+
+  /* ---------- Daftar harian ---------- */
+  function vHarian() {
+    var tgl = el('input', { type: 'date', value: harian.tgl, 'aria-label': 'Tanggal' });
+    var lay = el('select', { 'aria-label': 'Layanan' }, [el('option', { value: '', text: 'Semua layanan' }), el('option', { value: 'tatap', text: LAY.tatap }), el('option', { value: 'titip', text: LAY.titip })]);
+    var stt = el('select', { 'aria-label': 'Status' }, [el('option', { value: '', text: 'Semua status' }), el('option', { value: 'daftar', text: 'Belum hadir' }), el('option', { value: 'hadir', text: 'Hadir' }), el('option', { value: 'batal', text: 'Batal' })]);
+    var q = el('input', { type: 'text', placeholder: 'Saring nama', 'aria-label': 'Saring', value: harian.q });
+    lay.value = harian.lay; stt.value = harian.st;
+    var out = el('div'), m = el('div', { class: 'msg bad' });
+    tgl.onchange = function () { harian.tgl = tgl.value || hariIni(); muat(); };
+    lay.onchange = function () { harian.lay = lay.value; gambar(); };
+    stt.onchange = function () { harian.st = stt.value; gambar(); };
+    q.oninput = function () { harian.q = q.value; gambar(); };
+    function geser(n) { var d = new Date(harian.tgl + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + n); harian.tgl = d.toISOString().slice(0, 10); tgl.value = harian.tgl; muat(); }
+    main.append(el('div', { class: 'card' }, [
+      el('div', { class: 'bar' }, [el('button', { class: 'btn', text: '‹', 'aria-label': 'Hari sebelumnya', onclick: function () { geser(-1); } }), tgl, el('button', { class: 'btn', text: '›', 'aria-label': 'Hari berikutnya', onclick: function () { geser(1); } }),
+        el('button', { class: 'btn', text: 'Hari ini', onclick: function () { harian.tgl = hariIni(); tgl.value = harian.tgl; muat(); } }), lay, stt, q,
+        el('button', { class: 'btn', text: 'Unduh CSV', onclick: csv })]),
+      m, out
+    ]));
+    function muat() {
+      m.textContent = '';
+      return rpc('kj.list', { tgl: harian.tgl }).then(function (r) { harian.data = r; gambar(); }).catch(function (e) { m.textContent = e.message; });
+    }
+    function saring() {
+      var qq = harian.q.trim().toUpperCase();
+      return (harian.data ? harian.data.rows : []).filter(function (x) {
+        return (!harian.lay || x.layanan === harian.lay) && (!harian.st || x.status === harian.st) && (!qq || x.nama.indexOf(qq) >= 0 || x.wbp.toUpperCase().indexOf(qq) >= 0 || x.no.indexOf(qq) >= 0);
+      });
+    }
+    function gambar() {
+      out.textContent = '';
+      var d = harian.data; if (!d) { out.append(el('div', { class: 'muted', text: 'Memuat…' })); return; }
+      var stats = el('div', { class: 'stats' });
+      ['tatap', 'titip'].forEach(function (l) {
+        var rows = d.rows.filter(function (x) { return x.layanan === l && x.status !== 'batal'; });
+        var hadir = rows.filter(function (x) { return x.status === 'hadir'; }).length;
+        var orang = rows.reduce(function (s, x) { return s + 1 + x.pengikut; }, 0);
+        stats.append(el('div', { class: 'stat' }, [el('b', { text: rows.length + ' / ' + d.kuota[l] }), LAY[l] + ' · hadir ' + hadir + ' · ' + orang + ' orang']));
+      });
+      out.append(el('div', { class: 'muted', style: 'margin-top:10px', text: tglID(d.tgl) }), stats);
+      var rows = saring();
+      if (!rows.length) { out.append(el('div', { class: 'muted', text: 'Tidak ada pendaftaran.' })); return; }
+      var tb = el('tbody');
+      rows.forEach(function (x) {
+        var b = el('button', { class: 'btn sm' + (x.status === 'hadir' ? '' : ' ok'), text: x.status === 'hadir' ? 'Batal hadir' : 'Hadir', disabled: x.status === 'batal' ? 'disabled' : null, onclick: function () {
+          b.disabled = true;
+          rpc('kj.hadir', { kode: x.kode, status: x.status === 'hadir' ? 'daftar' : 'hadir' }).then(function (r) { Object.assign(x, r.row); gambar(); }).catch(function (e) { m.textContent = e.message; b.disabled = false; });
+        } });
+        tb.append(el('tr', { class: x.status }, [
+          el('td', { class: 'mono', text: x.no }), el('td', null, [el('b', { text: x.nama }), x.pengikut ? ' +' + x.pengikut : '']), el('td', { text: x.wbp }), el('td', { text: x.relasi }),
+          el('td', { class: 'mono', text: x.nik4 ? '…' + x.nik4 : '' }), el('td', { class: 'mono', text: x.hp }), el('td', { class: 'mono', text: x.kode }),
+          el('td', null, [el('span', { class: 'badge ' + x.status, text: ST[x.status] }), x.hadir_at ? el('div', { class: 'muted', text: jam(x.hadir_at) }) : null]), el('td', null, b)
+        ]));
+      });
+      out.append(el('div', { class: 'tw' }, el('table', null, [el('thead', null, el('tr', null, ['No', 'Pengunjung', 'WBP', 'Hubungan', 'NIK', 'HP', 'Kode', 'Status', ''].map(function (t) { return el('th', { text: t }); }))), tb])));
+    }
+    function csv() {
+      var rows = saring(); if (!rows.length) return;
+      var head = ['no', 'layanan', 'tanggal', 'nama', 'pengikut', 'wbp', 'register', 'hubungan', 'nik_4_akhir', 'hp', 'kode', 'status', 'jam_hadir'];
+      var lines = [head.join(',')].concat(rows.map(function (x) {
+        return [x.no, LAY[x.layanan], x.tgl, x.nama, x.pengikut, x.wbp, x.wbp_reg, x.relasi, x.nik4, x.hp, x.kode, ST[x.status], jam(x.hadir_at)].map(function (v) {
+          v = String(v == null ? '' : v); if (/^[=+\-@]/.test(v)) v = "'" + v; // cegah formula di Excel
+          return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+        }).join(',');
+      }));
+      var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' }));
+      a.download = 'kunjungan-' + harian.tgl + '.csv'; a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 5000);
+    }
+    gambar(); muat();
+    harian.timer = setInterval(function () { if (!document.hidden) muat(); }, 30000);
+  }
+
+  /* ---------- Pengaturan ---------- */
+  function vAtur() {
+    var box = el('div', { class: 'muted', text: 'Memuat pengaturan…' }); main.append(box);
+    rpc('kj.conf').then(function (r) { box.remove(); form(r.conf); }).catch(function (e) { box.className = 'msg bad'; box.textContent = e.message; });
+    function form(c) {
+      var hari = el('div', { class: 'hari' }), m = el('div', { class: 'msg' });
+      [1, 2, 3, 4, 5, 6, 0].forEach(function (d) { hari.append(el('label', null, [el('input', { type: 'checkbox', value: String(d), checked: c.hari.indexOf(d) >= 0 ? '' : null }), HARI[d]])); });
+      var kt = el('input', { type: 'number', min: '0', max: '2000', value: c.kuota.tatap }), kp = el('input', { type: 'number', min: '0', max: '2000', value: c.kuota.titip });
+      var depan = el('input', { type: 'number', min: '1', max: '30', value: c.hariDepan }), tutup = el('input', { type: 'time', value: c.tutupJam });
+      var ikut = el('input', { type: 'number', min: '0', max: '10', value: c.maksPengikut }), info = el('input', { type: 'text', value: c.info, maxlength: '500' });
+      var relasi = el('input', { type: 'text', value: c.relasi.join(', ') });
+      // kuota per tanggal dan libur
+      var kTgl = JSON.parse(JSON.stringify(c.kuotaTgl || {})), libur = (c.libur || []).slice();
+      var kList = el('div', { class: 'chips' }), lList = el('div', { class: 'chips' });
+      function gambarK() {
+        kList.textContent = '';
+        Object.keys(kTgl).sort().forEach(function (t) { kList.append(el('span', { class: 'chip' }, [tglID(t) + ': tatap ' + kTgl[t].tatap + ', titip ' + kTgl[t].titip, el('button', { type: 'button', 'aria-label': 'Hapus', text: '×', onclick: function () { delete kTgl[t]; gambarK(); } })])); });
+        lList.textContent = '';
+        libur.sort().forEach(function (t, i) { lList.append(el('span', { class: 'chip' }, [tglID(t), el('button', { type: 'button', 'aria-label': 'Hapus', text: '×', onclick: function () { libur.splice(i, 1); gambarK(); } })])); });
+      }
+      var kt2 = el('input', { type: 'date', min: hariIni(), 'aria-label': 'Tanggal' }), kq1 = el('input', { type: 'number', min: '0', placeholder: 'Tatap', style: 'width:100px', 'aria-label': 'Kuota tatap muka' }), kq2 = el('input', { type: 'number', min: '0', placeholder: 'Titip', style: 'width:100px', 'aria-label': 'Kuota penitipan' });
+      var lt = el('input', { type: 'date', min: hariIni(), 'aria-label': 'Tanggal libur' });
+      gambarK();
+      main.append(el('div', { class: 'grid2' }, [
+        el('div', { class: 'card set' }, [el('h2', { text: 'Jadwal dan kuota bawaan' }),
+          el('label', null, ['Hari buka', hari]),
+          el('label', null, ['Kuota tatap muka per hari', kt]), el('label', null, ['Kuota penitipan per hari', kp]),
+          el('label', null, ['Bisa daftar berapa hari ke depan', depan]), el('label', null, ['Pendaftaran untuk hari ini ditutup jam (WIB)', tutup]),
+          el('label', null, ['Maksimal pengikut per pendaftar', ikut]),
+          el('label', null, ['Pilihan hubungan (pisahkan dengan koma)', relasi]),
+          el('label', null, ['Pesan untuk pengunjung', info])]),
+        el('div', null, [
+          el('div', { class: 'card set' }, [el('h2', { text: 'Kuota khusus per tanggal' }), el('div', { class: 'bar' }, [kt2, kq1, kq2, el('button', { class: 'btn', type: 'button', text: 'Tambah', onclick: function () {
+            if (!kt2.value) return; kTgl[kt2.value] = { tatap: kq1.value === '' ? +kt.value : +kq1.value, titip: kq2.value === '' ? +kp.value : +kq2.value }; kt2.value = kq1.value = kq2.value = ''; gambarK();
+          } })]), kList]),
+          el('div', { class: 'card set' }, [el('h2', { text: 'Tanggal libur' }), el('div', { class: 'bar' }, [lt, el('button', { class: 'btn', type: 'button', text: 'Tambah', onclick: function () { if (lt.value && libur.indexOf(lt.value) < 0) libur.push(lt.value); lt.value = ''; gambarK(); } })]), lList]),
+          el('div', { class: 'card' }, [el('button', { class: 'btn pri big', style: 'width:100%', text: 'Simpan pengaturan', onclick: function (e) {
+            var b = e.currentTarget; b.disabled = true; m.className = 'msg'; m.textContent = '';
+            var hs = [].map.call(hari.querySelectorAll('input:checked'), function (i) { return +i.value; });
+            rpc('kj.confset', { conf: { hari: hs, kuota: { tatap: kt.value, titip: kp.value }, kuotaTgl: kTgl, libur: libur, hariDepan: +depan.value, tutupJam: tutup.value, maksPengikut: ikut.value, relasi: relasi.value.split(','), info: info.value } })
+              .then(function () { m.className = 'msg ok'; m.textContent = 'Tersimpan.'; }).catch(function (x) { m.className = 'msg bad'; m.textContent = x.message; }).then(function () { b.disabled = false; });
+          } }), m, el('p', { class: 'muted', style: 'margin-top:8px', text: 'Data pendaftaran dihapus otomatis setelah ' + c.simpanHari + ' hari.' })])
+        ])
+      ]));
+    }
+  }
+
+  // kode petugas yang tersimpan, atau kode editor dari dashboard utama (localStorage 'kode', origin sama)
+  kode = ls('kjKode') || ls('kode');
+  if (kode) {
+    var dariDashboard = !ls('kjKode');
+    fetch(window.API_URL, { method: 'POST', redirect: 'follow', credentials: 'omit', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ kode: kode, op: 'kj.login' }) })
+      .then(function (r) { return r.json(); })
+      .then(function (r) { if (r.ok) mulai(); else { if (!dariDashboard) ls('kjKode', null); kode = ''; layarLogin(dariDashboard ? '' : (r.error && r.error.message)); } })
+      .catch(function () { layarLogin('Server tidak bisa dihubungi.'); });
+  } else layarLogin();
+})();
+</script>
+</body>
+</html>
