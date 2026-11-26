@@ -857,8 +857,8 @@ window.PEMBACA_URL = 'https://claude.ai/artifact/CVCErEk8gzB9wXBQWebYny';
     bnav();
   }
   /* HP: menu utama di bawah layar. Isinya 4 tab utama + Menu untuk sisanya */
-  var BOTTOM = ['beranda', 'penghuni', 'unggah', 'laporan'];
-  var IKON = { beranda: 'M3 11l9-8 9 8v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z', penghuni: 'M16 20v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2M9.5 10a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM21 20v-2a4 4 0 0 0-3-3.9M16 3.1a3.5 3.5 0 0 1 0 6.8', unggah: 'M12 16V4M7 9l5-5 5 5M4 20h16', laporan: 'M4 20V10M10 20V4M16 20v-7M22 20H2', menu: 'M4 6h16M4 12h16M4 18h16' };
+  var BOTTOM = ['beranda', 'penghuni', 'unggah', 'laporan', 'kirim'];
+  var IKON = { beranda: 'M3 11l9-8 9 8v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z', penghuni: 'M16 20v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2M9.5 10a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM21 20v-2a4 4 0 0 0-3-3.9M16 3.1a3.5 3.5 0 0 1 0 6.8', unggah: 'M12 16V4M7 9l5-5 5 5M4 20h16', laporan: 'M4 20V10M10 20V4M16 20v-7M22 20H2', kirim: 'M22 2L11 13M22 2l-7 20-4-9-9-4z', menu: 'M4 6h16M4 12h16M4 18h16' };
   function ikon(k) { var sp = document.createElement('span'); sp.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="' + IKON[k] + '"></path></svg>'; return sp.firstChild; }
   function bnav() {
     var bar = document.getElementById('bnav'), sheet = document.getElementById('bmenu');
