@@ -1,0 +1,6 @@
+Perubahan Kode.gs untuk pendaftaran kunjungan (satu baris di doPost).
+Operasi berawalan 'kj.' diteruskan ke kunjungan_() di Kunjungan.gs, sebelum pemeriksaan kode akses situs utama,
+karena formulir publik tidak memakai kode akses (operasi petugas tetap diperiksa di kunjungan_ dengan KODE_KUNJUNGAN).
+
+-function doPost(e) { var r; try { var b = JSON.parse((e && e.postData && e.postData.contents) || '{}'); r = api(b.kode, b.op, b.args); } catch (x) { ...
++function doPost(e) { var r; try { var b = JSON.parse((e && e.postData && e.postData.contents) || '{}'); r = String(b.op || '').indexOf('kj.') === 0 ? kunjungan_(b) : api(b.kode, b.op, b.args); } catch (x) { ...

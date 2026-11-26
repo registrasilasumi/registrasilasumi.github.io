@@ -702,7 +702,7 @@ window.PEMBACA_URL = 'https://claude.ai/artifact/CVCErEk8gzB9wXBQWebYny';
   var P = window.P;
   var S = { master: [], nchunks: 0, meta: null, events: [], masuk: [], mutasi: [], lap: [], loaded: {}, canWrite: true, db: null, sample: null, err: '' };
   var ui = { tab: 'beranda', q: '', fb: '', fg: '', fj: '', page: 1, bulan: '', bket: '', lapTgl: '', open: '', up: {}, redit: '', rdraft: {}, sdraft: {}, rfull: {}, rq: '' };
-  var TABS = [['beranda', 'Beranda'], ['agenda', 'Agenda'], ['sidang', 'Sidang'], ['periksa', 'Pemeriksaan'], ['bebas', 'Bebas'], ['masuk', 'WBP Baru'], ['penghuni', 'Penghuni'], ['keluar', 'WBP di Luar'], ['mutasi', 'Rencana Mutasi'], ['laporan', 'Laporan'], ['kirim', 'Kirim Laporan'], ['unggah', 'Unggah']];
+  var TABS = [['beranda', 'Beranda'], ['agenda', 'Agenda'], ['sidang', 'Sidang'], ['periksa', 'Pemeriksaan'], ['bebas', 'Bebas'], ['masuk', 'WBP Baru'], ['penghuni', 'Penghuni'], ['keluar', 'WBP di Luar'], ['mutasi', 'Rencana Mutasi'], ['laporan', 'Laporan'], ['daftar', 'Pendaftaran'], ['kirim', 'Kirim Laporan'], ['unggah', 'Unggah']];
   var $view = document.getElementById('view');
 
   function h(tag, a) {
@@ -857,8 +857,8 @@ window.PEMBACA_URL = 'https://claude.ai/artifact/CVCErEk8gzB9wXBQWebYny';
     bnav();
   }
   /* HP: menu utama di bawah layar. Isinya 4 tab utama + Menu untuk sisanya */
-  var BOTTOM = ['beranda', 'penghuni', 'unggah', 'laporan'];
-  var IKON = { beranda: 'M3 11l9-8 9 8v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z', penghuni: 'M16 20v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2M9.5 10a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM21 20v-2a4 4 0 0 0-3-3.9M16 3.1a3.5 3.5 0 0 1 0 6.8', unggah: 'M12 16V4M7 9l5-5 5 5M4 20h16', laporan: 'M4 20V10M10 20V4M16 20v-7M22 20H2', menu: 'M4 6h16M4 12h16M4 18h16' };
+  var BOTTOM = ['beranda', 'penghuni', 'unggah', 'laporan', 'daftar'];
+  var IKON = { beranda: 'M3 11l9-8 9 8v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z', penghuni: 'M16 20v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2M9.5 10a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM21 20v-2a4 4 0 0 0-3-3.9M16 3.1a3.5 3.5 0 0 1 0 6.8', unggah: 'M12 16V4M7 9l5-5 5 5M4 20h16', laporan: 'M4 20V10M10 20V4M16 20v-7M22 20H2', daftar: 'M9 4h6v3H9zM7 5H5v16h14V5h-2M9 12h6M9 16h4', menu: 'M4 6h16M4 12h16M4 18h16' };
   function ikon(k) { var sp = document.createElement('span'); sp.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="' + IKON[k] + '"></path></svg>'; return sp.firstChild; }
   function bnav() {
     var bar = document.getElementById('bnav'), sheet = document.getElementById('bmenu');
@@ -1832,6 +1832,35 @@ function bukaLepas(e) {
     if (catatan) add(card, h('div', { class: 'note', text: catatan }));
     return card;
   }
+  /* ---------- Pendaftaran kunjungan (halaman daftar.html dan petugas.html, data di sheet 'kunjungan') ---------- */
+  function vDaftar() {
+    var link = new URL('daftar.html', location.href).href, root = h('div');
+    var ringkas = h('div', { class: 'faint', text: 'Memuat pendaftaran hari ini…' });
+    var salin = h('button', { class: 'btn', text: 'Salin tautan', onclick: function () {
+      (navigator.clipboard ? navigator.clipboard.writeText(link) : Promise.reject()).then(function () { salin.textContent = 'Tersalin'; }, function () { salin.textContent = 'Salin manual dari kotak di atas'; });
+      setTimeout(function () { salin.textContent = 'Salin tautan'; }, 2500);
+    } });
+    add(root, h('div', { class: 'card' },
+      h('h2', { text: 'Pendaftaran kunjungan online' }),
+      h('p', { class: 'faint', style: 'margin-bottom:10px', text: 'Keluarga mendaftar sendiri lewat formulir publik (tatap muka atau penitipan), lalu mendapat nomor antrian dan QR. Petugas memindai QR dan menandai hadir di panel petugas.' }),
+      h('div', { class: 'rbtns', style: 'flex-wrap:wrap' },
+        h('a', { class: 'btn', href: 'petugas.html', target: '_blank', rel: 'noopener', style: 'text-decoration:none', text: 'Buka panel petugas' }),
+        h('a', { class: 'btn', href: 'daftar.html', target: '_blank', rel: 'noopener', style: 'text-decoration:none', text: 'Buka formulir publik' }), salin),
+      h('input', { type: 'text', readonly: 'readonly', value: link, 'aria-label': 'Tautan formulir publik', style: 'width:100%;margin-top:10px', onfocus: function (e) { e.target.select(); } })));
+    add(root, h('div', { class: 'card' }, h('h2', { text: 'Hari ini' }), ringkas));
+    fetch(window.API_URL, { method: 'POST', redirect: 'follow', credentials: 'omit', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ kode: (function () { try { return localStorage.getItem('kode') || ''; } catch (e) { return ''; } })(), op: 'kj.list', args: {} }) })
+      .then(function (r) { return r.json(); }).then(function (r) {
+        if (r.error) { ringkas.textContent = r.error.code === 'login_failed' ? 'Ringkasan hanya untuk kode editor. Petugas kunjungan masuk lewat panel petugas.' : r.error.message; return; }
+        var L = { tatap: 'Tatap muka', titip: 'Penitipan' };
+        clear(ringkas); ringkas.className = '';
+        add(ringkas, h('div', { class: 'dl' }, Object.keys(L).map(function (k) {
+          var rows = r.rows.filter(function (x) { return x.layanan === k && x.status !== 'batal'; });
+          return h('div', null, h('small', { text: L[k] }), rows.length + ' / ' + r.kuota[k] + ' terdaftar · ' + rows.filter(function (x) { return x.status === 'hadir'; }).length + ' hadir');
+        })));
+      }).catch(function () { ringkas.textContent = 'Pendaftaran belum aktif di server atau koneksi terputus.'; });
+    return root;
+  }
+
   function vKirim() {
     if (!wr()) return h('div', { class: 'card' }, empty('Khusus admin', 'Kirim laporan hanya bisa dibuka dengan kode editor.'));
     var L = S.lap[0], root = h('div');
@@ -2680,7 +2709,7 @@ function bukaLepas(e) {
     if (p2u()) ui.tab = 'agenda';
     if (sdgOnly()) ui.tab = 'sidang';
     try {
-      v = ui.tab === 'beranda' ? vBeranda() : ui.tab === 'sidang' ? vJadwal('sidang') : ui.tab === 'periksa' ? vJadwal('periksa') : ui.tab === 'bebas' ? vBebas() : ui.tab === 'masuk' ? vMasuk() : ui.tab === 'penghuni' ? vPenghuni() : ui.tab === 'keluar' ? vKeluar() : ui.tab === 'mutasi' ? vMutasi() : ui.tab === 'agenda' ? vAgenda() : ui.tab === 'laporan' ? vLaporan() : ui.tab === 'kirim' ? vKirim() : vUnggah();
+      v = ui.tab === 'beranda' ? vBeranda() : ui.tab === 'sidang' ? vJadwal('sidang') : ui.tab === 'periksa' ? vJadwal('periksa') : ui.tab === 'bebas' ? vBebas() : ui.tab === 'masuk' ? vMasuk() : ui.tab === 'penghuni' ? vPenghuni() : ui.tab === 'keluar' ? vKeluar() : ui.tab === 'mutasi' ? vMutasi() : ui.tab === 'agenda' ? vAgenda() : ui.tab === 'laporan' ? vLaporan() : ui.tab === 'kirim' ? vKirim() : ui.tab === 'daftar' ? vDaftar() : vUnggah();
     } catch (e) { v = h('div', { class: 'msg bad', text: 'Tampilan gagal dibuat: ' + (e.message || e) }); }
     clear($view).append(v);
     document.getElementById('ptitle').textContent = 'Registrasi Lapas Kelas I Sukamiskin · ' + (TABS.filter(function (t) { return t[0] === ui.tab; })[0] || ['', ''])[1] + ' · ' + P.tglID(today(), true);
