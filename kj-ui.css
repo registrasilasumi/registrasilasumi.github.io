@@ -34,6 +34,8 @@ button{cursor:pointer}
 .brand{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
 .brand i{flex:none;width:36px;height:36px;border-radius:11px;background:var(--accent);color:var(--accentink);display:grid;place-items:center}
 .brand i svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.brand .lg{flex:none;display:flex;align-items:center;gap:6px}
+.brand .lg img{height:36px;width:auto;display:block;object-fit:contain}
 .brand small{display:block;font-size:10.5px;letter-spacing:.09em;color:var(--ink3);font-weight:600;text-transform:uppercase}
 .brand b{display:block;font-size:16.5px;font-weight:700;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tema{display:inline-flex;border:1px solid var(--line);border-radius:999px;background:var(--panel);padding:2px;flex:none}
