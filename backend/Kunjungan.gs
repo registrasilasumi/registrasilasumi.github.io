@@ -14,8 +14,8 @@
  * NIK tidak pernah disimpan utuh: hanya HMAC-SHA256 (dengan garam rahasia) dan 4 digit terakhir.
  */
 
-var KJ_KOLOM = ['kode', 'tgl', 'no', 'layanan', 'wbp_reg', 'wbp_nama', 'relasi', 'nama', 'hp', 'nik_h', 'nik4', 'pengikut', 'status', 'dibuat', 'hadir_at', 'petugas'];
-var KJ_LAYANAN = { tatap: { nama: 'Kunjungan tatap muka', awal: 'A' }, titip: { nama: 'Penitipan barang', awal: 'B' } };
+var KJ_KOLOM = ['kode', 'tgl', 'no', 'layanan', 'wbp_reg', 'wbp_nama', 'relasi', 'nama', 'hp', 'nik_h', 'nik4', 'pengikut', 'status', 'dibuat', 'hadir_at', 'petugas', 'jk', 'alamat', 'nik', 'pl', 'pp', 'pa', 'barang', 'blok'];
+var KJ_LAYANAN = { tatap: { nama: 'Kunjungan tatap muka', kd: 'TM' }, titip: { nama: 'Penitipan barang', kd: 'PB' } };
 var KJ_BAWAAN = {
   hari: [1, 2, 3, 4, 5, 6],          // 0 = Minggu ... 6 = Sabtu
   kuota: { tatap: 150, titip: 100 },  // kuota bawaan per tanggal
@@ -24,8 +24,9 @@ var KJ_BAWAAN = {
   hariDepan: 7,                       // berapa hari ke depan bisa didaftar
   tutupJam: '12:00',                  // pendaftaran untuk HARI INI ditutup setelah jam ini (WIB)
   relasi: ['Orang tua', 'Suami/Istri', 'Anak', 'Saudara kandung', 'Keluarga lain', 'Kuasa hukum', 'Teman'],
-  maksPengikut: 3,
-  nik: 'hash',                        // 'hash' = NIK wajib, disimpan tersandi; 'off' = NIK tidak diminta
+  maksPengikut: 5,                    // total pengikut (laki-laki dewasa + perempuan dewasa + anak-anak)
+  nik: 'hash',                        // 'hash' = NIK wajib; 'off' = NIK tidak diminta. NIK disimpan di sheet (dicetak di formulir) dan ikut dihapus otomatis
+  foto: 'wajib',                      // 'wajib' = foto pengunjung wajib dari formulir; 'off' = tanpa foto
   simpanHari: 30,                     // data dihapus otomatis setelah sekian hari
   info: 'Bawa KTP asli. Datang sesuai tanggal dan tunjukkan QR ke petugas.'
 };
@@ -47,6 +48,7 @@ function kunjungan_(b) {
     if (op === 'kj.login') return { ok: true, role: who };
     if (op === 'kj.list') return kjList_(a);
     if (op === 'kj.cari') return kjCari_(a);
+    if (op === 'kj.foto') return { ok: true, foto: kjFotoBaca_(String(a.kode || '').toUpperCase()) };
     if (op === 'kj.hadir') return kjHadir_(a, who);
     if (op === 'kj.conf') return { ok: true, conf: kjConf_() };
     if (op === 'kj.confset') return kjConfSet_(a);
@@ -106,9 +108,26 @@ function kjSheet_() {
     sh = ss.insertSheet('kunjungan');
     sh.getRange(1, 1, 1, KJ_KOLOM.length).setValues([KJ_KOLOM]);
     sh.setFrozenRows(1);
-    sh.getRange('A:P').setNumberFormat('@');
+    sh.getRange('A:Z').setNumberFormat('@');
+  } else if (sh.getRange(1, 1, 1, KJ_KOLOM.length).getValues()[0].join('|') !== KJ_KOLOM.join('|')) {
+    sh.getRange(1, 1, 1, KJ_KOLOM.length).setValues([KJ_KOLOM]); // kolom baru ditambah di ujung, baris lama tetap valid
   }
   return sh;
+}
+
+// foto pengunjung: sheet 'kunjungan_foto' kolom A = kode, B = JPEG base64 (dihapus bersama pendaftarannya)
+function kjFotoSheet_() {
+  var ss = SpreadsheetApp.openById(prop_('SHEET_ID'));
+  var sh = ss.getSheetByName('kunjungan_foto');
+  if (!sh) { sh = ss.insertSheet('kunjungan_foto'); sh.appendRow(['kode', 'b64']); sh.setFrozenRows(1); sh.getRange('A:B').setNumberFormat('@'); }
+  return sh;
+}
+function kjFotoBaca_(kode) {
+  var sh = kjFotoSheet_(), last = sh.getLastRow();
+  if (last < 2) return '';
+  var v = sh.getRange(2, 1, last - 1, 2).getValues();
+  for (var i = 0; i < v.length; i++) if (String(v[i][0]) === kode) return String(v[i][1]);
+  return '';
 }
 
 function kjBaca_() {
@@ -121,6 +140,7 @@ function kjBaca_() {
     for (var j = 0; j < KJ_KOLOM.length; j++) o[KJ_KOLOM[j]] = kunci_(v[i][j]);
     o.no = parseInt(o.no, 10) || 0;
     o.pengikut = parseInt(o.pengikut, 10) || 0;
+    o.pl = parseInt(o.pl, 10) || 0; o.pp = parseInt(o.pp, 10) || 0; o.pa = parseInt(o.pa, 10) || 0;
     out.push(o);
   }
   return out;
@@ -139,7 +159,7 @@ function kjHp_(hp) {
   return /^08\d{7,12}$/.test(hp) ? hp : '';
 }
 
-function kjNoTampil_(r) { return (KJ_LAYANAN[r.layanan] ? KJ_LAYANAN[r.layanan].awal : '') + ('00' + r.no).slice(-3); }
+function kjNoTampil_(r) { return ('00' + r.no).slice(-3); }
 
 // batas permintaan per menit untuk seluruh pengunjung (Apps Script tidak tahu alamat IP)
 function kjBatas_(nama, maks) {
@@ -192,7 +212,7 @@ function kjPenghuni_() {
   var list = [];
   bacaSemua_().forEach(function (d) {
     if (d.coll !== 'master' || !d.data || !d.data.rows) return;
-    d.data.rows.forEach(function (r) { if (r && r.k && r.n) list.push([String(r.k), String(r.n)]); });
+    d.data.rows.forEach(function (r) { if (r && r.k && r.n) list.push([String(r.k), String(r.n), String(r.b || '')]); });
   });
   var s = JSON.stringify(list), size = 90000, put = {}, cnt = Math.ceil(s.length / size);
   for (var p = 0; p < cnt; p++) put['kjwbp_' + p] = s.slice(p * size, (p + 1) * size);
@@ -231,7 +251,7 @@ function kjNikCari_(a) {
   var h = kjNik_(nik), rows = kjBaca_(), r = null;
   for (var i = 0; i < rows.length; i++) if (rows[i].nik_h === h && (!r || rows[i].dibuat > r.dibuat)) r = rows[i];
   if (!r) return { ok: true, ada: false };
-  return { ok: true, ada: true, nama: r.nama, wbp: { k: r.wbp_reg, n: r.wbp_nama }, relasi: r.relasi, pengikut: r.pengikut, hp_awal: r.hp.slice(0, 4), hp_akhir: r.hp.slice(-3) };
+  return { ok: true, ada: true, nama: r.nama, wbp: { k: r.wbp_reg, n: r.wbp_nama }, relasi: r.relasi, pengikut: r.pengikut, pl: r.pl, pp: r.pp, pa: r.pa, jk: r.jk, alamat: r.alamat, hp_awal: r.hp.slice(0, 4), hp_akhir: r.hp.slice(-3) };
 }
 
 function kjDaftar_(a) {
@@ -241,14 +261,21 @@ function kjDaftar_(a) {
   var c = kjConf_();
   var tgl = String(a.tgl || ''), lay = String(a.layanan || ''), relasi = String(a.relasi || '');
   var nama = String(a.nama || '').replace(/\s+/g, ' ').trim().toUpperCase();
-  var hp = kjHp_(a.hp), nik = String(a.nik || '').replace(/\D/g, ''), ikut = parseInt(a.pengikut, 10) || 0;
+  var hp = kjHp_(a.hp), nik = String(a.nik || '').replace(/\D/g, '');
+  var pl = parseInt(a.pl, 10) || 0, pp = parseInt(a.pp, 10) || 0, pa = parseInt(a.pa, 10) || 0, ikut = pl + pp + pa;
+  var jk = String(a.jk || ''), alamat = String(a.alamat || '').replace(/\s+/g, ' ').trim().toUpperCase(), barang = String(a.barang || '').replace(/\s+/g, ' ').trim().slice(0, 300);
+  var foto = String(a.foto || '');
   var reg = String(a.wbp || '');
   if (!KJ_LAYANAN[lay]) return kjSalah_('Pilih layanan.');
   if (!/^[A-Z' .,]{3,60}$/.test(nama)) return kjSalah_('Nama pengunjung 3 sampai 60 huruf, sesuai KTP.');
   if (!hp) return kjSalah_('Nomor HP tidak valid. Contoh: 081234567890.');
   if (c.nik === 'hash' && !/^\d{16}$/.test(nik)) return kjSalah_('NIK harus 16 angka.');
   if (c.relasi.indexOf(relasi) < 0) return kjSalah_('Pilih hubungan dengan WBP.');
-  if (ikut < 0 || ikut > c.maksPengikut) return kjSalah_('Jumlah pengikut paling banyak ' + c.maksPengikut + '.');
+  if (pl < 0 || pp < 0 || pa < 0 || ikut > c.maksPengikut) return kjSalah_('Jumlah pengikut paling banyak ' + c.maksPengikut + ' orang.');
+  if (jk !== 'L' && jk !== 'P') return kjSalah_('Pilih jenis kelamin.');
+  if (alamat.length < 5 || alamat.length > 150) return kjSalah_('Isi alamat lengkap (5 sampai 150 karakter).');
+  if (c.foto === 'wajib' && !foto) return kjSalah_('Foto pengunjung wajib diunggah.');
+  if (foto && (foto.length > 48000 || foto.indexOf('/9j/') !== 0 || !/^[A-Za-z0-9+\/=]+$/.test(foto))) return kjSalah_('Foto tidak valid. Ambil ulang fotonya.');
   var wbp = null, P = kjPenghuni_();
   for (var i = 0; i < P.length; i++) if (P[i][0] === reg) { wbp = P[i]; break; }
   if (!wbp) return kjSalah_('WBP tidak ditemukan. Cari dan pilih nama dari daftar.');
@@ -268,42 +295,44 @@ function kjDaftar_(a) {
       if (r.tgl !== tgl) continue;
       if (r.layanan === lay && r.no > max) max = r.no;
       if (r.status === 'batal' || r.layanan !== lay) continue;
-      if (r.hp === hp || (nikH && r.nik_h === nikH)) return kjSalah_('Nomor HP atau NIK ini sudah terdaftar untuk ' + KJ_LAYANAN[lay].nama.toLowerCase() + ' pada tanggal itu. Kode: ' + r.kode);
+      if (r.hp === hp || (nikH && r.nik_h === nikH)) return kjSalah_('Nomor HP atau NIK ini sudah terdaftar untuk ' + KJ_LAYANAN[lay].nama.toLowerCase() + ' pada tanggal itu. Buka tiketnya dari daftar "Tiket di perangkat ini", atau tanyakan ke petugas.');
     }
-    var kode = kjKodeBaru_(rows);
-    var baru = { kode: kode, tgl: tgl, no: max + 1, layanan: lay, wbp_reg: wbp[0], wbp_nama: wbp[1], relasi: relasi, nama: nama, hp: hp, nik_h: nikH, nik4: nik ? nik.slice(-4) : '', pengikut: ikut, status: 'daftar', dibuat: new Date().toISOString(), hadir_at: '', petugas: '' };
+    var kode = kjKodeBaru_(rows, tgl, lay, max + 1);
+    var baru = { kode: kode, tgl: tgl, no: max + 1, layanan: lay, wbp_reg: wbp[0], wbp_nama: wbp[1], relasi: relasi, nama: nama, hp: hp, nik_h: nikH, nik4: nik ? nik.slice(-4) : '', pengikut: ikut, status: 'daftar', dibuat: new Date().toISOString(), hadir_at: '', petugas: '', jk: jk, alamat: alamat, nik: nik, pl: pl, pp: pp, pa: pa, barang: barang, blok: wbp[2] || '' };
     var sh = kjSheet_(), row = Math.max(sh.getLastRow(), 1) + 1, rg = sh.getRange(row, 1, 1, KJ_KOLOM.length);
     rg.setNumberFormat('@');
     rg.setValues([KJ_KOLOM.map(function (k) { return String(baru[k]); })]);
+    if (foto) { var fs = kjFotoSheet_(), fr = Math.max(fs.getLastRow(), 1) + 1, fg = fs.getRange(fr, 1, 1, 2); fg.setNumberFormat('@'); fg.setValues([[kode, foto]]); }
     return { ok: true, tiket: kjTiketPublik_(baru) };
   } finally { lock.releaseLock(); }
 }
 
 function kjSalah_(m) { return { error: { code: 'invalid_argument', message: m } }; }
 
-function kjKodeBaru_(rows) {
+// format: SKM-yymmdd-TM|PB-nnn-XXXXX (tanggal kunjungan, layanan, nomor antrian, 5 karakter acak)
+function kjKodeBaru_(rows, tgl, lay, no) {
   var ada = {}; rows.forEach(function (r) { ada[r.kode] = 1; });
-  var huruf = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  var huruf = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', awal = 'SKM-' + tgl.slice(2, 4) + tgl.slice(5, 7) + tgl.slice(8, 10) + '-' + KJ_LAYANAN[lay].kd + '-' + ('00' + no).slice(-3) + '-';
   for (var n = 0; n < 50; n++) {
-    var b = Utilities.getUuid().replace(/-/g, ''), s = 'KJ';
-    for (var i = 0; i < 6; i++) s += huruf.charAt(parseInt(b.substr(i * 2, 2), 16) % huruf.length);
-    if (!ada[s]) return s;
+    var b = Utilities.getUuid().replace(/-/g, ''), s = awal;
+    for (var i = 0; i < 5; i++) s += huruf.charAt(parseInt(b.substr(i * 2, 2), 16) % huruf.length);
+    if (!ada[awal + s.slice(awal.length)]) return s;
   }
   throw new Error('Gagal membuat kode, coba lagi.');
 }
 
 // data yang boleh dilihat pemegang tiket: tanpa HP lengkap dan tanpa NIK
 function kjTiketPublik_(r) {
-  return { kode: r.kode, tgl: r.tgl, no: kjNoTampil_(r), layanan: r.layanan, layananNama: KJ_LAYANAN[r.layanan] ? KJ_LAYANAN[r.layanan].nama : r.layanan, wbp: r.wbp_nama, relasi: r.relasi, nama: r.nama, pengikut: r.pengikut, status: r.status };
+  return { kode: r.kode, tgl: r.tgl, no: kjNoTampil_(r), layanan: r.layanan, layananNama: KJ_LAYANAN[r.layanan] ? KJ_LAYANAN[r.layanan].nama : r.layanan, wbp: r.wbp_nama, wbp_reg: r.wbp_reg, blok: r.blok, relasi: r.relasi, nama: r.nama, nik: r.nik, hp: r.hp, jk: r.jk, alamat: r.alamat, pl: r.pl, pp: r.pp, pa: r.pa, pengikut: r.pengikut, barang: r.barang, status: r.status };
 }
 
 // buka ulang tiket: kode + 4 digit akhir nomor HP
 function kjTiket_(a) {
   if (!kjBatas_('tiket', 60)) return { error: { code: 'rate_limited', message: 'Server sedang sibuk. Coba lagi sebentar.' } };
   var kode = String(a.kode || '').toUpperCase().trim(), hp4 = String(a.hp4 || '').replace(/\D/g, '');
-  if (!/^KJ[A-Z0-9]{6}$/.test(kode) || hp4.length !== 4) return kjSalah_('Isi kode pendaftaran dan 4 angka terakhir nomor HP.');
+  if (!/^SKM-\d{6}-(TM|PB)-\d{3}-[A-Z0-9]{5}$/.test(kode) || hp4.length !== 4) return kjSalah_('Isi kode pendaftaran dan 4 angka terakhir nomor HP.');
   var rows = kjBaca_();
-  for (var i = 0; i < rows.length; i++) if (rows[i].kode === kode && rows[i].hp.slice(-4) === hp4) return { ok: true, tiket: kjTiketPublik_(rows[i]) };
+  for (var i = 0; i < rows.length; i++) if (rows[i].kode === kode && rows[i].hp.slice(-4) === hp4) return { ok: true, tiket: kjTiketPublik_(rows[i]), foto: kjFotoBaca_(kode) };
   return kjSalah_('Pendaftaran tidak ditemukan.');
 }
 
@@ -320,7 +349,7 @@ function kjPetugas_(kode) {
 
 function kjPetugasRow_(r) {
   var o = kjTiketPublik_(r);
-  o.hp = r.hp; o.nik4 = r.nik4; o.wbp_reg = r.wbp_reg; o.urut = r.no; o.dibuat = r.dibuat; o.hadir_at = r.hadir_at;
+  o.nik4 = r.nik4; o.urut = r.no; o.dibuat = r.dibuat; o.hadir_at = r.hadir_at;
   return o;
 }
 
@@ -342,6 +371,7 @@ function kjCari_(a) {
   var hasil = rows.filter(function (r) {
     if (r.kode === q) return true;
     if (nikH && r.nik_h === nikH) return true;
+    if (/^\d{16}$/.test(digit) && r.nik === digit) return true;
     if (hp && r.hp === hp) return true;
     if (/^\d{4}$/.test(q) && (r.nik4 === q || r.hp.slice(-4) === q)) return true;
     return /[A-Z]/.test(q) && (r.nama.indexOf(q) >= 0 || r.wbp_nama.indexOf(q) >= 0);
@@ -383,5 +413,9 @@ function kjBersihkan() {
   try {
     var sh = kjSheet_(), rows = kjBaca_();
     for (var i = rows.length - 1; i >= 0; i--) if (rows[i].tgl < batas) sh.deleteRow(rows[i]._row);
+    // foto yatim (pendaftarannya sudah terhapus) ikut dibuang
+    var ada = {}; kjBaca_().forEach(function (r) { ada[r.kode] = 1; });
+    var fs = kjFotoSheet_(), fl = fs.getLastRow();
+    if (fl >= 2) { var fk = fs.getRange(2, 1, fl - 1, 1).getValues(); for (var j = fk.length - 1; j >= 0; j--) if (!ada[String(fk[j][0])]) fs.deleteRow(j + 2); }
   } finally { lock.releaseLock(); }
 }
