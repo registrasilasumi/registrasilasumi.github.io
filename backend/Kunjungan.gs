@@ -38,6 +38,7 @@ function kunjungan_(b) {
     // operasi publik (tanpa kode akses)
     if (op === 'kj.info') return kjInfo_();
     if (op === 'kj.wbp') return kjCariWbp_(a);
+    if (op === 'kj.nik') return kjNikCari_(a);
     if (op === 'kj.daftar') return kjDaftar_(a);
     if (op === 'kj.tiket') return kjTiket_(a);
     // operasi petugas
@@ -164,26 +165,19 @@ function kjTanggal_(c, rows) {
   return hasil;
 }
 
-/* ---------- soal hitungan (anti bot sederhana), ditandatangani server supaya tidak perlu disimpan ---------- */
-function kjSoal_() {
-  var x = 2 + Math.floor(Math.random() * 8), y = 1 + Math.floor(Math.random() * 9);
-  var exp = Date.now() + 30 * 60000, nonce = Utilities.getUuid().slice(0, 8);
-  var isi = (x + y) + '.' + exp + '.' + nonce;
-  var sig = Utilities.base64EncodeWebSafe(Utilities.computeHmacSha256Signature(isi, prop_('KJ_SALT') + ':soal')).slice(0, 22);
-  // jawaban tidak dikirim terbuka: token hanya berisi exp, nonce, dan tanda tangan
-  return { teks: x + ' + ' + y, token: exp + '.' + nonce + '.' + sig };
+/* ---------- token waktu (pengganti soal hitungan): bertanda tangan server, bot yang mengirim terlalu cepat ditolak ---------- */
+function kjToken_() {
+  var t = String(Date.now()), sig = Utilities.base64EncodeWebSafe(Utilities.computeHmacSha256Signature(t, prop_('KJ_SALT') + ':tok')).slice(0, 22);
+  return t + '.' + sig;
 }
 
-function kjCekSoal_(token, jawab) {
+function kjCekToken_(token) {
   var p = String(token || '').split('.');
-  if (p.length !== 3 || !(+p[0] > Date.now())) return false;
-  var isi = parseInt(jawab, 10) + '.' + p[0] + '.' + p[1];
-  var sig = Utilities.base64EncodeWebSafe(Utilities.computeHmacSha256Signature(isi, prop_('KJ_SALT') + ':soal')).slice(0, 22);
-  if (!sama_(sig, p[2])) return false;
-  var c = CacheService.getScriptCache(), k = 'kjsoal_' + p[1];
-  if (c.get(k)) return false; // token sekali pakai
-  c.put(k, '1', 1900);
-  return true;
+  if (p.length !== 2 || !/^\d{10,}$/.test(p[0])) return false;
+  var sig = Utilities.base64EncodeWebSafe(Utilities.computeHmacSha256Signature(p[0], prop_('KJ_SALT') + ':tok')).slice(0, 22);
+  if (!sama_(sig, p[1])) return false;
+  var umur = Date.now() - parseInt(p[0], 10);
+  return umur >= 4000 && umur <= 3 * 3600000; // manusia butuh lebih dari 4 detik untuk mengisi formulir
 }
 
 /* ---------- daftar penghuni (dari koleksi 'master' situs utama) ---------- */
@@ -212,7 +206,7 @@ function kjInfo_() {
   if (!kjBatas_('info', 300)) return { error: { code: 'rate_limited', message: 'Server sedang sibuk. Coba lagi sebentar.' } };
   var c = kjConf_();
   var layanan = Object.keys(KJ_LAYANAN).map(function (k) { return { id: k, nama: KJ_LAYANAN[k].nama }; });
-  return { ok: true, tanggal: kjTanggal_(c, kjBaca_().filter(function (r) { return r.tgl >= kjHari_(0); })), layanan: layanan, relasi: c.relasi, maksPengikut: c.maksPengikut, nik: c.nik, info: c.info, soal: kjSoal_() };
+  return { ok: true, tanggal: kjTanggal_(c, kjBaca_().filter(function (r) { return r.tgl >= kjHari_(0); })), layanan: layanan, relasi: c.relasi, maksPengikut: c.maksPengikut, nik: c.nik, info: c.info, token: kjToken_() };
 }
 
 function kjCariWbp_(a) {
@@ -229,10 +223,21 @@ function kjCariWbp_(a) {
   return { ok: true, hasil: hasil.map(function (r) { return { k: r[0], n: r[1] }; }) };
 }
 
+// isi otomatis: pendaftaran terakhir dengan NIK yang sama (selama masih tersimpan). HP hanya dikirim tersamar.
+function kjNikCari_(a) {
+  if (!kjBatas_('nik', 40)) return { error: { code: 'rate_limited', message: 'Terlalu banyak pencarian. Coba lagi sebentar.' } };
+  var nik = String(a.nik || '').replace(/\D/g, '');
+  if (!/^\d{16}$/.test(nik) || kjConf_().nik !== 'hash') return { ok: true, ada: false };
+  var h = kjNik_(nik), rows = kjBaca_(), r = null;
+  for (var i = 0; i < rows.length; i++) if (rows[i].nik_h === h && (!r || rows[i].dibuat > r.dibuat)) r = rows[i];
+  if (!r) return { ok: true, ada: false };
+  return { ok: true, ada: true, nama: r.nama, wbp: { k: r.wbp_reg, n: r.wbp_nama }, relasi: r.relasi, pengikut: r.pengikut, hp_awal: r.hp.slice(0, 4), hp_akhir: r.hp.slice(-3) };
+}
+
 function kjDaftar_(a) {
   if (!kjBatas_('daftar', 30)) return { error: { code: 'rate_limited', message: 'Terlalu banyak pendaftaran saat ini. Coba lagi dalam satu menit.' } };
   if (a.situs) return { error: { code: 'invalid_argument', message: 'Pendaftaran ditolak.' } }; // kolom jebakan bot terisi
-  if (!kjCekSoal_(a.token, a.jawab)) return { error: { code: 'captcha', message: 'Jawaban hitungan salah atau kedaluwarsa. Muat ulang soal lalu coba lagi.' } };
+  if (!kjCekToken_(a.token)) return { error: { code: 'captcha', message: 'Formulir kedaluwarsa atau terkirim terlalu cepat. Coba tekan Daftar sekali lagi.' } };
   var c = kjConf_();
   var tgl = String(a.tgl || ''), lay = String(a.layanan || ''), relasi = String(a.relasi || '');
   var nama = String(a.nama || '').replace(/\s+/g, ' ').trim().toUpperCase();

@@ -86,6 +86,23 @@ tr.batal td{opacity:.55}
 .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
 .chip{display:flex;gap:6px;align-items:center;background:var(--accentbg);border-radius:999px;padding:4px 6px 4px 12px;font-size:13px}
 .chip button{border:none;background:none;font-weight:700;padding:0 6px}
+#cetak{display:none}
+.slip{font-family:var(--font);color:#000;text-align:center}
+.slip .k{font-size:13pt;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.slip .l{font-size:12pt;margin-top:2mm}
+.slip .no{font-family:var(--mono);font-size:64pt;font-weight:700;line-height:1.05;margin:4mm 0 1mm}
+.slip .tg{font-size:14pt;font-weight:600}
+.slip canvas{width:62mm;height:62mm;margin:5mm auto 1mm;display:block;image-rendering:pixelated}
+.slip .kd{font-family:var(--mono);font-size:18pt;font-weight:700;letter-spacing:.1em}
+.slip dl{display:grid;grid-template-columns:auto 1fr;gap:1.5mm 5mm;text-align:left;margin:6mm 6mm 0;font-size:11.5pt}
+.slip dt{color:#444}.slip dd{font-weight:600;overflow-wrap:anywhere}
+.slip .ft{margin-top:6mm;font-size:9.5pt;color:#444}
+@page{size:A5 portrait;margin:10mm}
+@media print{
+  body{background:#fff}
+  body>*:not(#cetak){display:none!important}
+  #cetak{display:block}
+}
 [hidden]{display:none!important}
 @media(max-width:820px){.grid2{grid-template-columns:1fr}nav{margin-left:0;width:100%}nav button{flex:1;padding:10px 8px}}
 </style>
@@ -98,8 +115,10 @@ tr.batal td{opacity:.55}
   </nav>
 </header>
 <main id="main"></main>
+<div id="cetak" aria-hidden="true"></div>
 
 <script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
 <script>
 (function () {
   'use strict';
@@ -127,6 +146,37 @@ tr.batal td{opacity:.55}
       .then(function (r) { if (r && r.error) { if (r.error.code === 'login_failed') keluar(r.error.message); throw r.error; } return r; })
       .catch(function (e) { if (e && e.code) throw e; throw { code: 'unavailable', message: 'Server tidak bisa dihubungi.' }; });
   }
+
+  /* ---------- cetak slip A5 (ukuran kertas diatur lewat @page, pilih A5 di dialog cetak) ---------- */
+  function qrCanvas(text) {
+    var q = qrcode(0, 'M'); q.addData(text); q.make();
+    var n = q.getModuleCount(), px = 8, pad = 2, c = document.createElement('canvas');
+    c.width = c.height = (n + pad * 2) * px;
+    var x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); x.fillStyle = '#000';
+    for (var r = 0; r < n; r++) for (var k = 0; k < n; k++) if (q.isDark(r, k)) x.fillRect((k + pad) * px, (r + pad) * px, px, px);
+    return c;
+  }
+  function cetakA5(r) {
+    if (typeof qrcode !== 'function') { alert_('Pembuat QR belum termuat. Periksa koneksi lalu coba lagi.'); return; }
+    var box = document.getElementById('cetak'); box.textContent = '';
+    box.append(el('div', { class: 'slip' }, [
+      el('div', { class: 'k', text: 'Lapas Kelas I Sukamiskin' }),
+      el('div', { class: 'l', text: r.layananNama }),
+      el('div', { class: 'no', text: r.no }),
+      el('div', { class: 'tg', text: tglID(r.tgl) }),
+      qrCanvas(r.kode),
+      el('div', { class: 'kd', text: r.kode }),
+      el('dl', null, [
+        el('dt', { text: 'Pengunjung' }), el('dd', { text: r.nama + (r.pengikut ? ' + ' + r.pengikut + ' pengikut' : '') }),
+        el('dt', { text: 'WBP' }), el('dd', { text: r.wbp }),
+        el('dt', { text: 'Hubungan' }), el('dd', { text: r.relasi }),
+        el('dt', { text: 'NIK' }), el('dd', { text: r.nik4 ? '•••• •••• •••• ' + r.nik4 : '–' })
+      ]),
+      el('div', { class: 'ft', text: 'Tunjukkan lembar ini dan KTP asli kepada petugas. Berlaku pada tanggal di atas.' })
+    ]));
+    setTimeout(function () { window.print(); }, 150);
+  }
+  function alert_(t) { var m = document.querySelector('.msg'); if (m) { m.className = 'msg bad'; m.textContent = t; } }
 
   /* ---------- login ---------- */
   function layarLogin(pesan) {
@@ -168,6 +218,7 @@ tr.batal td{opacity:.55}
     var acts = el('div', { class: 'bar' });
     if (r.status !== 'hadir') { var bh = el('button', { class: 'btn ok big', text: 'Tandai hadir', onclick: function () { ubah('hadir', bh); } }); acts.append(bh); }
     else { var bu = el('button', { class: 'btn', text: 'Batalkan tanda hadir', onclick: function () { ubah('daftar', bu); } }); acts.append(bu); }
+    acts.append(el('button', { class: 'btn', text: 'Cetak A5', onclick: function () { cetakA5(r); } }));
     if (r.status !== 'batal') { var bb = el('button', { class: 'btn', text: 'Batalkan pendaftaran', onclick: function () { if (confirmInline(bb)) ubah('batal', bb); } }); acts.append(bb); }
     return el('div', { class: 'card hasil' }, [
       el('div', { class: 'bar', style: 'justify-content:space-between' }, [el('div', { class: 'no', text: r.no }), el('span', { class: 'badge ' + r.status, text: ST[r.status] || r.status })]),
@@ -330,7 +381,7 @@ tr.batal td{opacity:.55}
         tb.append(el('tr', { class: x.status }, [
           el('td', { class: 'mono', text: x.no }), el('td', null, [el('b', { text: x.nama }), x.pengikut ? ' +' + x.pengikut : '']), el('td', { text: x.wbp }), el('td', { text: x.relasi }),
           el('td', { class: 'mono', text: x.nik4 ? '…' + x.nik4 : '' }), el('td', { class: 'mono', text: x.hp }), el('td', { class: 'mono', text: x.kode }),
-          el('td', null, [el('span', { class: 'badge ' + x.status, text: ST[x.status] }), x.hadir_at ? el('div', { class: 'muted', text: jam(x.hadir_at) }) : null]), el('td', null, b)
+          el('td', null, [el('span', { class: 'badge ' + x.status, text: ST[x.status] }), x.hadir_at ? el('div', { class: 'muted', text: jam(x.hadir_at) }) : null]), el('td', { style: 'white-space:nowrap' }, [b, ' ', el('button', { class: 'btn sm', text: 'Cetak A5', onclick: function () { cetakA5(x); } })])
         ]));
       });
       out.append(el('div', { class: 'tw' }, el('table', null, [el('thead', null, el('tr', null, ['No', 'Pengunjung', 'WBP', 'Hubungan', 'NIK', 'HP', 'Kode', 'Status', ''].map(function (t) { return el('th', { text: t }); }))), tb])));

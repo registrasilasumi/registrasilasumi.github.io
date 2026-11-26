@@ -128,7 +128,17 @@ input:focus,select:focus,button:focus-visible{outline:2px solid var(--teal);outl
       </section>
 
       <section class="card">
-        <h2><span class="n">2</span>WBP yang dikunjungi</h2>
+        <h2><span class="n">2</span>Data pengunjung</h2>
+        <label class="f" id="nikL">NIK<span class="h">16 angka di KTP. Pernah mendaftar? Data akan terisi otomatis. NIK disimpan tersandi; petugas hanya melihat 4 angka terakhir.</span>
+          <input type="text" id="nik" inputmode="numeric" maxlength="16" autocomplete="off"></label>
+        <div class="msg ok" id="auto" hidden></div>
+        <label class="f">Nama lengkap sesuai KTP<input type="text" id="nama" autocomplete="name" autocapitalize="characters" maxlength="60" required></label>
+        <label class="f">Nomor HP / WhatsApp<span class="h" id="hpH"></span><input type="tel" id="hp" inputmode="tel" autocomplete="tel" placeholder="08…" maxlength="16" required></label>
+        <label class="f">Jumlah pengikut<span class="h">Orang yang datang bersama Anda, tidak termasuk Anda</span><select id="ikut"></select></label>
+      </section>
+
+      <section class="card">
+        <h2><span class="n">3</span>WBP yang dikunjungi</h2>
         <div id="wbpCari">
           <label class="f">Nama WBP<span class="h">Ketik minimal 3 huruf, lalu pilih dari daftar</span>
             <input type="text" id="wq" autocomplete="off" autocapitalize="characters" spellcheck="false"></label>
@@ -137,17 +147,7 @@ input:focus,select:focus,button:focus-visible{outline:2px solid var(--teal);outl
         </div>
         <div class="pick" id="wpick" hidden><b id="wnama"></b><button class="btn sm" type="button" id="wganti">Ganti</button></div>
         <label class="f">Hubungan dengan WBP<select id="relasi" required><option value="">Pilih…</option></select></label>
-      </section>
-
-      <section class="card">
-        <h2><span class="n">3</span>Data pengunjung</h2>
-        <label class="f">Nama lengkap sesuai KTP<input type="text" id="nama" autocomplete="name" autocapitalize="characters" maxlength="60" required></label>
-        <label class="f" id="nikL">NIK<span class="h">16 angka di KTP. Disimpan tersandi; petugas hanya melihat 4 angka terakhir.</span>
-          <input type="text" id="nik" inputmode="numeric" maxlength="16" autocomplete="off"></label>
-        <label class="f">Nomor HP / WhatsApp<input type="tel" id="hp" inputmode="tel" autocomplete="tel" placeholder="08…" maxlength="16" required></label>
-        <label class="f">Jumlah pengikut<span class="h">Orang yang datang bersama Anda, tidak termasuk Anda</span><select id="ikut"></select></label>
         <div class="hp" aria-hidden="true"><label>Situs web<input type="text" id="situs" tabindex="-1" autocomplete="off"></label></div>
-        <label class="f">Berapa hasil hitungan ini?<div class="cap"><b id="soal">…</b><input type="tel" id="jawab" inputmode="numeric" maxlength="3" autocomplete="off" aria-label="Jawaban"><button class="btn sm" type="button" id="soalBaru">Soal lain</button></div></label>
         <label class="chk"><input type="checkbox" id="setuju"><span>Data di atas benar. Saya setuju data ini dipakai petugas untuk layanan kunjungan dan dihapus otomatis setelah 30 hari.</span></label>
       </section>
 
@@ -165,7 +165,7 @@ input:focus,select:focus,button:focus-visible{outline:2px solid var(--teal);outl
   var $ = function (id) { return document.getElementById(id); };
   var HARI = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', "Jum'at", 'Sabtu'];
   var BULAN = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-  var st = { info: null, tgl: '', lay: '', wbp: null, soal: null, kirim: false };
+  var st = { info: null, tgl: '', lay: '', wbp: null, token: '', kirim: false };
 
   function tglID(t, pendek) {
     var p = t.split('-'), d = new Date(Date.UTC(+p[0], +p[1] - 1, +p[2]));
@@ -189,7 +189,7 @@ input:focus,select:focus,button:focus-visible{outline:2px solid var(--teal);outl
   /* ---------- muat ---------- */
   function muat() {
     return rpc('kj.info').then(function (r) {
-      st.info = r; st.soal = r.soal;
+      st.info = r; st.token = r.token;
       $('load').hidden = true; $('form').hidden = false;
       $('info').textContent = r.info || '';
       if (!st.lay) st.lay = r.layanan[0].id;
@@ -199,8 +199,7 @@ input:focus,select:focus,button:focus-visible{outline:2px solid var(--teal);outl
       rs.length = 1; r.relasi.forEach(function (x) { rs.append(el('option', { value: x, text: x })); }); rs.value = cur;
       var ik = $('ikut'), ci = ik.value || '0';
       ik.length = 0; for (var i = 0; i <= r.maksPengikut; i++) ik.append(el('option', { value: String(i), text: i ? i + ' orang' : 'Tidak ada' })); ik.value = ci;
-      $('nikL').hidden = r.nik !== 'hash';
-      $('soal').textContent = r.soal.teks + ' = ';
+      $('nikL').hidden = r.nik !== 'hash'; if (r.nik !== 'hash') $('auto').hidden = true;
     }).catch(function (e) { $('load').textContent = e.message || 'Gagal memuat.'; $('load').append(el('div', { style: 'margin-top:10px' }, el('button', { class: 'btn', type: 'button', text: 'Coba lagi', onclick: function () { $('load').textContent = 'Memuat jadwal…'; muat(); } }))); });
   }
 
@@ -216,7 +215,7 @@ input:focus,select:focus,button:focus-visible{outline:2px solid var(--teal);outl
     var ada = false;
     st.info.tanggal.forEach(function (d) {
       var s = d.sisa[st.lay], ok = d.buka && s > 0; if (ok) ada = true;
-      box.append(el('button', { type: 'button', 'aria-pressed': String(st.tgl === d.tgl), disabled: ok ? null : 'disabled', onclick: function () { st.tgl = d.tgl; gambarHari(); } },
+      box.append(el('button', { class: 'day', type: 'button', 'aria-pressed': String(st.tgl === d.tgl), disabled: ok ? null : 'disabled', onclick: function () { st.tgl = d.tgl; gambarHari(); } },
         [el('b', { text: tglID(d.tgl, true) }), el('span', { text: !d.buka ? 'Tutup' : s > 0 ? 'Sisa ' + s : 'Penuh' })]));
     });
     if (!ada) box.append(el('div', { class: 'muted', text: 'Belum ada tanggal yang bisa didaftar untuk layanan ini.' }));
@@ -243,28 +242,47 @@ input:focus,select:focus,button:focus-visible{outline:2px solid var(--teal);outl
   function pilihWbp(w) { st.wbp = w; $('wnama').textContent = w.n; $('wpick').hidden = false; $('wbpCari').hidden = true; }
   $('wganti').onclick = function () { st.wbp = null; $('wpick').hidden = true; $('wbpCari').hidden = false; $('wq').focus(); };
 
-  $('nik').addEventListener('input', function () { this.value = this.value.replace(/\D/g, ''); });
+  /* ---------- isi otomatis dari NIK ---------- */
+  var nikTerakhir = '';
+  $('nik').addEventListener('input', function () {
+    this.value = this.value.replace(/\D/g, '');
+    $('auto').hidden = true;
+    if (this.value.length !== 16 || this.value === nikTerakhir) return;
+    nikTerakhir = this.value;
+    rpc('kj.nik', { nik: this.value }).then(function (r) {
+      if (!r.ada) return;
+      var diisi = [];
+      if (!$('nama').value.trim()) { $('nama').value = r.nama; diisi.push('nama'); }
+      if (!st.wbp && r.wbp) { pilihWbp(r.wbp); diisi.push('WBP'); }
+      if (!$('relasi').value && r.relasi) { $('relasi').value = r.relasi; diisi.push('hubungan'); }
+      if ($('ikut').value === '0' && r.pengikut) { $('ikut').value = String(r.pengikut); }
+      var hp = ls('kjHp');
+      if (!$('hp').value && hp && hp.indexOf(r.hp_awal) === 0 && hp.slice(-3) === r.hp_akhir) { $('hp').value = hp; diisi.push('HP'); }
+      else if (!$('hp').value) $('hpH').textContent = 'Terdaftar sebelumnya: ' + r.hp_awal + '•••••' + r.hp_akhir + '. Isi lagi nomor lengkapnya.';
+      $('auto').textContent = 'Data dari pendaftaran sebelumnya sudah terisi. Periksa lalu pilih tanggal dan layanan.'; $('auto').hidden = false;
+    }).catch(function () { /* isi manual saja */ });
+  });
   $('nama').addEventListener('input', function () { var p = this.selectionStart; this.value = this.value.toUpperCase(); this.setSelectionRange(p, p); });
-  $('soalBaru').onclick = function () { muat(); $('jawab').value = ''; };
 
   /* ---------- kirim ---------- */
   $('f').addEventListener('submit', function (ev) {
     ev.preventDefault();
     if (st.kirim) return;
     var m = $('msg'); m.textContent = '';
-    var data = { tgl: st.tgl, layanan: st.lay, wbp: st.wbp && st.wbp.k, relasi: $('relasi').value, nama: $('nama').value.trim(), nik: $('nik').value, hp: $('hp').value, pengikut: $('ikut').value, situs: $('situs').value, token: st.soal && st.soal.token, jawab: $('jawab').value };
+    var data = { tgl: st.tgl, layanan: st.lay, wbp: st.wbp && st.wbp.k, relasi: $('relasi').value, nama: $('nama').value.trim(), nik: $('nik').value, hp: $('hp').value, pengikut: $('ikut').value, situs: $('situs').value, token: st.token };
     var salah = !data.tgl ? 'Pilih tanggal kunjungan.' : !data.wbp ? 'Cari dan pilih nama WBP.' : !data.relasi ? 'Pilih hubungan dengan WBP.' : data.nama.length < 3 ? 'Isi nama lengkap sesuai KTP.' :
       (st.info.nik === 'hash' && !/^\d{16}$/.test(data.nik)) ? 'NIK harus 16 angka.' : !/^(\+?62|0)8[\d\s-]{7,14}$/.test(data.hp.trim()) ? 'Nomor HP tidak valid. Contoh: 081234567890.' :
-      !data.jawab ? 'Jawab soal hitungan.' : !$('setuju').checked ? 'Centang persetujuan data.' : '';
+      !$('setuju').checked ? 'Centang persetujuan data.' : '';
     if (salah) { m.textContent = salah; return; }
     st.kirim = true; $('kirim').disabled = true; $('kirim').textContent = 'Mengirim…';
     rpc('kj.daftar', data).then(function (r) {
       simpanTiket(r.tiket, data.hp.replace(/\D/g, '').slice(-4));
-      $('f').reset(); st.wbp = null; $('wpick').hidden = true; $('wbpCari').hidden = false; $('wres').textContent = '';
+      ls('kjHp', data.hp.replace(/[\s\-().]/g, '').replace(/^\+?62/, '0'));
+      $('f').reset(); nikTerakhir = ''; $('auto').hidden = true; $('hpH').textContent = ''; st.wbp = null; $('wpick').hidden = true; $('wbpCari').hidden = false; $('wres').textContent = '';
       tampilTiket(r.tiket, true);
     }).catch(function (e) {
       m.textContent = e.message || 'Pendaftaran gagal.';
-      if (e.code === 'captcha' || e.code === 'invalid_argument') { $('jawab').value = ''; muat(); }
+      if (e.code === 'captcha' || e.code === 'invalid_argument') muat();
     }).then(function () { st.kirim = false; $('kirim').disabled = false; $('kirim').textContent = 'Daftar'; });
   });
 
