@@ -44,12 +44,28 @@ label.f:first-of-type{margin-top:0}
 label.f .h{display:block;font-weight:400;color:var(--ink3);font-size:12.5px}
 input[type=text],input[type=tel],input[type=number],select{display:block;width:100%;margin-top:4px;border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:11px 12px;font-size:16px;min-width:0}
 input:focus,select:focus,button:focus-visible{outline:2px solid var(--teal);outline-offset:1px}
-.days{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
-.day{border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:8px 10px;text-align:left}
-.day b{display:block;font-size:14px}
-.day span{display:block;font-size:12px;color:var(--ink2)}
-.day[aria-pressed=true]{border-color:var(--teal);background:var(--tealbg);box-shadow:0 0 0 1px var(--teal) inset}
-.day:disabled{opacity:.5;cursor:not-allowed}
+.cal{border:1px solid var(--line);border-radius:12px;background:var(--bg);padding:10px}
+.cal-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.cal-h b{font-size:15px}
+.cal-h button{width:38px;height:38px;border:1px solid var(--line);background:var(--panel);border-radius:10px;font-size:18px;line-height:1}
+.cal-h button:disabled{opacity:.35;cursor:not-allowed}
+.cal-w,.cal-g{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal-w span{text-align:center;font-size:11px;font-weight:600;color:var(--ink3);padding:2px 0 4px}
+.cal-g i{display:block}
+.cal-g button{position:relative;aspect-ratio:1/1.08;min-width:0;border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:2px 0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px}
+.cal-g button b{font-size:15px;font-weight:700}
+.cal-g button span{font-size:9.5px;color:var(--ink2);line-height:1.1}
+.cal-g button.ok{border-color:color-mix(in srgb,var(--ok) 45%,var(--line));background:var(--okbg)}
+.cal-g button.low span{color:var(--warn);font-weight:700}
+.cal-g button.full{background:var(--badbg);border-color:transparent}.cal-g button.full span{color:var(--bad)}
+.cal-g button.off{background:transparent;border-color:transparent;color:var(--ink3)}
+.cal-g button.today::after{content:"";position:absolute;top:4px;right:4px;width:6px;height:6px;border-radius:50%;background:var(--teal)}
+.cal-g button[aria-pressed=true]{background:var(--teal);border-color:var(--teal);color:#fff;box-shadow:0 0 0 2px color-mix(in srgb,var(--teal) 30%,transparent)}
+.cal-g button[aria-pressed=true] span{color:#fff}
+.cal-g button:disabled{cursor:not-allowed}
+.cal-leg{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px;font-size:11.5px;color:var(--ink2)}
+.cal-leg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+.cal-sum{margin-top:10px;font-size:14px;font-weight:600;min-height:21px}
 .seg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
 .seg button{border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:10px;font-weight:600;font-size:14px}
 .seg button[aria-pressed=true]{border-color:var(--teal);background:var(--tealbg);box-shadow:0 0 0 1px var(--teal) inset}
@@ -129,7 +145,7 @@ input:focus,select:focus,button:focus-visible{outline:2px solid var(--teal);outl
       <section class="card">
         <h2><span class="n">1</span>Layanan dan tanggal</h2>
         <div class="seg" id="lay" role="group" aria-label="Layanan"></div>
-        <div class="days" id="days" role="group" aria-label="Tanggal kunjungan"></div>
+        <div id="days"></div>
       </section>
 
       <section class="card">
@@ -146,7 +162,7 @@ input:focus,select:focus,button:focus-visible{outline:2px solid var(--teal);outl
           <div class="muted" id="pkMsg"></div></div>
         <div class="f" style="margin-top:12px"><b style="font-size:14px">Foto pengunjung</b><span class="h" style="display:block;font-weight:400;color:var(--ink3);font-size:12.5px">Foto wajah yang jelas, tanpa kacamata hitam atau masker. Dicetak di bukti pendaftaran.</span>
           <div class="fotorow"><div class="fotoprev" id="fotoPrev"><span>Belum ada foto</span></div>
-            <div><input type="file" id="foto" accept="image/*" capture="user" hidden><button class="btn" type="button" id="fotoBtn">Ambil / pilih foto</button><div class="muted" id="fotoMsg"></div></div></div></div>
+            <div><input type="file" id="foto" accept="image/*" capture="user" hidden><input type="file" id="fotoGal" accept="image/*" hidden><button class="btn" type="button" id="fotoBtn">Ambil foto</button> <button class="lnk" type="button" id="fotoGalBtn">atau pilih dari galeri</button><div class="muted" id="fotoMsg"></div></div></div></div>
       </section>
 
       <section class="card">
@@ -228,14 +244,40 @@ input:focus,select:focus,button:focus-visible{outline:2px solid var(--teal);outl
   }
   function bisa(t) { return st.info.tanggal.some(function (d) { return d.tgl === t && d.buka && d.sisa[st.lay] > 0; }); }
   function gambarHari() {
-    var box = $('days'); box.textContent = '';
-    var ada = false;
-    st.info.tanggal.forEach(function (d) {
-      var s = d.sisa[st.lay], ok = d.buka && s > 0; if (ok) ada = true;
-      box.append(el('button', { class: 'day', type: 'button', 'aria-pressed': String(st.tgl === d.tgl), disabled: ok ? null : 'disabled', onclick: function () { st.tgl = d.tgl; gambarHari(); } },
-        [el('b', { text: tglID(d.tgl, true) }), el('span', { text: !d.buka ? 'Tutup' : s > 0 ? 'Sisa ' + s : 'Penuh' })]));
-    });
-    if (!ada) box.append(el('div', { class: 'muted', text: 'Belum ada tanggal yang bisa didaftar untuk layanan ini.' }));
+    var box = $('days'); box.textContent = ''; box.className = 'cal';
+    var T = st.info.tanggal, map = {}; T.forEach(function (d) { map[d.tgl] = d; });
+    var ada = T.filter(function (d) { return d.buka && d.sisa[st.lay] > 0; });
+    if (!ada.length) { box.append(el('div', { class: 'muted', text: 'Belum ada tanggal yang bisa didaftar untuk layanan ini.' })); return; }
+    var awal = T[0].tgl.slice(0, 7), akhir = T[T.length - 1].tgl.slice(0, 7);
+    if (!st.bulan || st.bulan < awal || st.bulan > akhir) st.bulan = (st.tgl || ada[0].tgl).slice(0, 7);
+    var ym = st.bulan.split('-'), y = +ym[0], m = +ym[1];
+    function geser(n) { var d = new Date(Date.UTC(y, m - 1 + n, 1)); st.bulan = d.toISOString().slice(0, 7); gambarHari(); }
+    box.append(el('div', { class: 'cal-h' }, [
+      el('button', { type: 'button', 'aria-label': 'Bulan sebelumnya', text: '‹', disabled: st.bulan <= awal ? 'disabled' : null, onclick: function () { geser(-1); } }),
+      el('b', { text: BULAN[m - 1] + ' ' + y }),
+      el('button', { type: 'button', 'aria-label': 'Bulan berikutnya', text: '›', disabled: st.bulan >= akhir ? 'disabled' : null, onclick: function () { geser(1); } })
+    ]));
+    box.append(el('div', { class: 'cal-w', 'aria-hidden': 'true' }, ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'].map(function (h) { return el('span', { text: h }); })));
+    var g = el('div', { class: 'cal-g', role: 'group', 'aria-label': 'Tanggal kunjungan' });
+    var lead = (new Date(Date.UTC(y, m - 1, 1)).getUTCDay() + 6) % 7, jml = new Date(Date.UTC(y, m, 0)).getUTCDate();
+    for (var i = 0; i < lead; i++) g.append(el('i'));
+    for (var n = 1; n <= jml; n++) {
+      var t = st.bulan + '-' + ('0' + n).slice(-2), d = map[t], ok = d && d.buka && d.sisa[st.lay] > 0, sisa = d ? d.sisa[st.lay] : 0;
+      var kls = !d ? 'off' : !d.buka ? 'off' : sisa <= 0 ? 'full' : sisa <= 10 ? 'ok low' : 'ok';
+      if (d && T[0].tgl === t) kls += ' today';
+      (function (t) {
+        g.append(el('button', { type: 'button', class: kls, 'aria-pressed': String(st.tgl === t), disabled: ok ? null : 'disabled',
+          'aria-label': tglID(t) + (!d ? ', tidak tersedia' : !d.buka ? ', tutup' : sisa <= 0 ? ', penuh' : ', sisa ' + sisa), onclick: function () { st.tgl = t; gambarHari(); } },
+          [el('b', { text: String(n) }), el('span', { text: !d ? '' : !d.buka ? 'Tutup' : sisa <= 0 ? 'Penuh' : 'Sisa ' + sisa })]));
+      })(t);
+    }
+    box.append(g);
+    box.append(el('div', { class: 'cal-leg' }, [
+      el('span', null, [el('i', { style: 'background:var(--okbg);border:1px solid var(--ok)' }), 'Tersedia']),
+      el('span', null, [el('i', { style: 'background:var(--badbg)' }), 'Penuh']),
+      el('span', null, [el('i', { style: 'background:var(--teal)' }), 'Dipilih'])]));
+    var pilih = st.tgl && map[st.tgl];
+    box.append(el('div', { class: 'cal-sum', text: pilih ? tglID(st.tgl) + ' · sisa kuota ' + pilih.sisa[st.lay] : 'Pilih tanggal kunjungan' }));
   }
 
   /* ---------- cari WBP ---------- */
@@ -261,7 +303,8 @@ input:focus,select:focus,button:focus-visible{outline:2px solid var(--teal);outl
 
   /* ---------- foto: dikecilkan di perangkat (maks. 480 px, JPEG) supaya muat disimpan ---------- */
   $('fotoBtn').onclick = function () { $('foto').click(); };
-  $('foto').addEventListener('change', function () {
+  $('fotoGalBtn').onclick = function () { $('fotoGal').click(); };
+  function fotoDipilih() {
     var f = this.files && this.files[0]; this.value = '';
     if (!f) return;
     $('fotoMsg').textContent = 'Memproses foto…';
@@ -278,7 +321,9 @@ input:focus,select:focus,button:focus-visible{outline:2px solid var(--teal);outl
     };
     img.onerror = function () { URL.revokeObjectURL(url); $('fotoMsg').textContent = 'Berkas bukan gambar yang bisa dibaca.'; };
     img.src = url;
-  });
+  }
+  $('foto').addEventListener('change', fotoDipilih);
+  $('fotoGal').addEventListener('change', fotoDipilih);
 
   /* ---------- isi otomatis dari NIK ---------- */
   var nikTerakhir = '';
